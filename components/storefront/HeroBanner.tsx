@@ -1,12 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 export default function HeroBanner() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const supabase = createClient();
+
+  const handleShopNow = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      router.push('/products');
+    } else {
+      router.push('/login?redirectTo=/products');
+    }
+  };
+
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto w-full">
       <div className="relative rounded-3xl bg-[#f3f4f6] dark:bg-zinc-900 border border-border/50 overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 sm:p-12 lg:p-16 gap-8 min-h-[360px] sm:min-h-[440px]">
@@ -50,11 +70,15 @@ export default function HeroBanner() {
             transition={{ duration: 0.4, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start"
           >
-            <Link href="/products" id="hero-cta-btn">
-              <Button size="lg" className="rounded-full font-semibold px-8 hover:shadow-lg">
-                Shop Now
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="rounded-full font-semibold px-8 hover:shadow-lg cursor-pointer" 
+              onClick={handleShopNow}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Shop Now
+            </Button>
             <Link href="/#flash-sale" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
               View Flash Sales &rarr;
             </Link>
