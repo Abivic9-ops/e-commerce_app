@@ -38,7 +38,7 @@ export function AdminTopbar({ user }: AdminTopbarProps) {
           
           // Full window redirect ensures Supabase session state cookie gets completely purged in client + server
           setTimeout(() => {
-            window.location.href = '/login';
+            window.location.href = '/';
           }, 500);
         } else {
           toast.error(result.error || 'Failed to logout.');

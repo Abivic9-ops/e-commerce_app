@@ -1,27 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, User, Sun, Moon, Search, Menu, Heart } from 'lucide-react';
+import { ShoppingCart, User, Sun, Moon, Search, Menu, Heart, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import CartSheet from '@/components/storefront/CartSheet';
+import { logoutAction } from '@/app/actions/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface HeaderClientProps {
+  user: { id: string; email?: string } | null;
   isAdmin?: boolean;
 }
 
-export default function HeaderClient({ isAdmin }: HeaderClientProps) {
+export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const handleLogout = () => {
+    startTransition(async () => {
+      try {
+        const result = await logoutAction();
+        if (result.success) {
+          toast.success('Logged out successfully.');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 500);
+        } else {
+          toast.error(result.error || 'Failed to logout.');
+        }
+      } catch (err) {
+        toast.error('An error occurred during logout.');
+        console.error(err);
+      }
+    });
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur-md transition-colors duration-200">
       <div className="mx-auto flex max-w-7xl h-16 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
-        
+
         {/* Mobile Menu Trigger */}
         <Button
           variant="ghost"
@@ -94,7 +127,7 @@ export default function HeaderClient({ isAdmin }: HeaderClientProps) {
 
         {/* Actions Menu */}
         <div className="flex items-center gap-2">
-          
+
           {/* Light/Dark Toggle */}
           <Button
             variant="ghost"
@@ -118,17 +151,50 @@ export default function HeaderClient({ isAdmin }: HeaderClientProps) {
             <Heart className="h-5 w-5" />
           </Button>
 
-          {/* Account Menu */}
-          <Link href="/login" id="account-link">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full text-foreground/80 hover:text-foreground"
-              aria-label="Account Account"
-            >
-              <User className="h-5 w-5" />
-            </Button>
-          </Link>
+          {/* Account Menu - dropdown when logged in, link to login when not */}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full text-foreground/80 hover:text-foreground"
+                  aria-label="Account"
+                  id="account-link"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 border-border bg-card text-foreground">
+                <DropdownMenuLabel className="font-semibold text-xs text-muted-foreground">
+                  My Account
+                </DropdownMenuLabel>
+                <div className="px-2 py-1.5 text-sm font-medium text-foreground truncate select-none">
+                  {user.email}
+                </div>
+                <DropdownMenuSeparator className="bg-border" />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  disabled={isPending}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer font-medium"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{isPending ? 'Logging out...' : 'Log out'}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/login" id="account-link">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-foreground/80 hover:text-foreground"
+                aria-label="Sign In"
+              >
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
 
           {/* Cart Sheet Component */}
           <div id="cart-link" className="relative">
