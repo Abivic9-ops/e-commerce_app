@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { loginSchema, signupSchema, LoginInput, SignupInput } from '@/lib/schemas/auth';
 
 export async function loginAction(values: LoginInput) {
@@ -28,6 +29,11 @@ export async function loginAction(values: LoginInput) {
         error: error.message,
       };
     }
+
+    // Force session to be persisted to cookies before the response is sent.
+    // Without this, the async onAuthStateChange callback may fire after the
+    // Server Action has already returned, leaving the client without auth cookies.
+    await supabase.auth.getUser();
 
     const role = data.user?.user_metadata?.role || 'buyer';
 
@@ -61,17 +67,16 @@ export async function signupAction(values: SignupInput) {
   const { email, password, fullName, role } = validation.data;
 
   try {
-    const supabase = await createClient();
-    
-    // We register the user with full name and custom role metadata
-    const { data, error } = await supabase.auth.signUp({
+    // Use admin client (service role) to create users with email auto-confirmed.
+    // This bypasses Supabase's email rate limits and avoids the need for email confirmation.
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          fullName,
-          role,
-        },
+      email_confirm: true,
+      user_metadata: {
+        fullName,
+        role,
       },
     });
 

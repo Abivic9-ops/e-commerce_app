@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2, ArrowLeft, Lock, Mail } from 'lucide-react';
@@ -16,7 +16,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { FadeIn } from '@/components/motion/FadeIn';
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/';
   
@@ -43,14 +42,13 @@ function LoginForm() {
       if (response.success) {
         toast.success('Login successful! Welcome back.');
         
-        // Dynamic redirect based on user role and redirectTo param
         const targetUrl = response.role === 'admin' ? '/admin' : redirectTo;
         
-        // Use window.location for login redirect to ensure cookie state is refreshed completely
-        router.refresh();
+        // Full page navigation ensures auth cookies from the Server Action response
+        // are available on the subsequent request
         setTimeout(() => {
           window.location.href = targetUrl;
-        }, 800);
+        }, 500);
       } else {
         toast.error(response.error || 'Invalid email or password.');
       }
