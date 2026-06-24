@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { ADMIN_EMAIL } from '@/lib/config';
 
 function isAdminEmail(email: string): boolean {
   if (!email) return false;
-  const adminEmail = process.env.ADMIN_EMAIL || '';
-  return adminEmail.toLowerCase() === email.toLowerCase();
+  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
 export async function proxy(request: NextRequest) {

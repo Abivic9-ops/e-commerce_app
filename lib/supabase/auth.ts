@@ -1,5 +1,6 @@
 import { createClient } from './server';
 import { redirect } from 'next/navigation';
+import { ADMIN_EMAIL } from '@/lib/config';
 
 export interface AuthUser {
   id: string;
@@ -10,8 +11,7 @@ export interface AuthUser {
 
 function isAdminEmail(email: string): boolean {
   if (!email) return false;
-  const adminEmail = process.env.ADMIN_EMAIL || '';
-  return adminEmail.toLowerCase() === email.toLowerCase();
+  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
 async function readMockCookies(): Promise<AuthUser | null> {

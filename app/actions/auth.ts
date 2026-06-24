@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loginSchema, signupSchema, LoginInput, SignupInput } from '@/lib/schemas/auth';
+import { ADMIN_EMAIL } from '@/lib/config';
 
 export async function loginAction(values: LoginInput) {
   // 1. Validate input data
@@ -24,7 +25,7 @@ export async function loginAction(values: LoginInput) {
     if (isMock) {
       const { cookies } = await import('next/headers');
       const cookieStore = await cookies();
-      const role = email.includes('admin') || email.includes('vmwendwa') ? 'admin' : 'buyer';
+      const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
       const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
       cookieStore.set('mock_session_role', role, cookieOpts);
       cookieStore.set('mock_session_email', email, cookieOpts);
@@ -42,7 +43,7 @@ export async function loginAction(values: LoginInput) {
       if (error.message.includes('fetch') || error.message.includes('getaddrinfo') || process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
         const { cookies } = await import('next/headers');
         const cookieStore = await cookies();
-        const role = email.includes('admin') || email.includes('vmwendwa') ? 'admin' : 'buyer';
+        const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
         const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
         cookieStore.set('mock_session_role', role, cookieOpts);
         cookieStore.set('mock_session_email', email, cookieOpts);
@@ -52,14 +53,17 @@ export async function loginAction(values: LoginInput) {
     }
 
     await supabase.auth.getUser();
-    const role = data.user?.user_metadata?.role || 'buyer';
-    return { success: true, role, user: { id: data.user?.id, email: data.user?.email } };
+    const userEmail = data.user?.email || '';
+    const role = userEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+      ? 'admin'
+      : (data.user?.user_metadata?.role || 'buyer');
+    return { success: true, role, user: { id: data.user?.id, email: userEmail } };
   } catch (err: any) {
     // If Supabase completely crashes due to ENOTFOUND
     console.error('Login action fallback used due to error:', err.message);
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
-    const role = email.includes('admin') || email.includes('vmwendwa') ? 'admin' : 'buyer';
+    const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
     const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
     cookieStore.set('mock_session_role', role, cookieOpts);
     cookieStore.set('mock_session_email', email, cookieOpts);
