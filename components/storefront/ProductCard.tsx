@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Star, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,9 +25,11 @@ export interface Product {
 interface ProductCardProps {
   product: Product;
   onAddToCart?: (product: Product) => void;
+  isLoggedIn?: boolean;
 }
 
-export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, isLoggedIn }: ProductCardProps) {
+  const router = useRouter();
   const stockPercentage = (product.stock / product.maxStock) * 100;
   const addItem = useCartStore(state => state.addItem);
 
@@ -123,6 +126,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <Button
             onClick={(e) => {
               e.preventDefault();
+              if (!isLoggedIn) {
+                router.push(`/login?redirectTo=${encodeURIComponent(window.location.pathname)}`);
+                return;
+              }
               if (onAddToCart) {
                 onAddToCart(product);
               } else {

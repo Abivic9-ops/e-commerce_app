@@ -1,6 +1,7 @@
 import React from 'react';
 import { getProducts } from '@/app/actions/products';
 import { getCategories } from '@/app/actions/categories';
+import { getCurrentUser } from '@/lib/supabase/auth';
 import Header from '@/components/storefront/Header';
 import HeroBanner from '@/components/storefront/HeroBanner';
 import CategoryRow from '@/components/storefront/CategoryRow';
@@ -133,6 +134,8 @@ const fallbackRecommendedProducts: Product[] = [
 export default async function StorefrontHomePage() {
   const dbProducts = await getProducts();
   const dbCategories = await getCategories();
+  const user = await getCurrentUser();
+  const isLoggedIn = !!user;
 
   // Map db products to UI interfaces
   const mappedProducts: Product[] = dbProducts.map((p: any) => ({
@@ -172,6 +175,7 @@ export default async function StorefrontHomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <ProductGrid
               products={flashSaleProducts}
+              isLoggedIn={isLoggedIn}
             />
           </div>
         </div>
@@ -194,6 +198,7 @@ export default async function StorefrontHomePage() {
 
           <ProductGrid
             products={recommendedProducts}
+            isLoggedIn={isLoggedIn}
           />
         </section>
 

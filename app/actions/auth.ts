@@ -23,10 +23,11 @@ export async function loginAction(values: LoginInput) {
 
     if (isMock) {
       const { cookies } = await import('next/headers');
-      // Let any email be an admin for testing, or specific test emails
+      const cookieStore = await cookies();
       const role = email.includes('admin') || email.includes('vmwendwa') ? 'admin' : 'buyer';
-      (await cookies()).set('mock_session_role', role, { path: '/' });
-      (await cookies()).set('mock_session_email', email, { path: '/' });
+      const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
+      cookieStore.set('mock_session_role', role, cookieOpts);
+      cookieStore.set('mock_session_email', email, cookieOpts);
       return { success: true, role, user: { id: 'mock-123', email } };
     }
 
@@ -40,9 +41,11 @@ export async function loginAction(values: LoginInput) {
       // If network error (Supabase down/placeholder), fallback to mock auth
       if (error.message.includes('fetch') || error.message.includes('getaddrinfo') || process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
         const { cookies } = await import('next/headers');
-        const role = email.includes('admin') ? 'admin' : 'buyer';
-        (await cookies()).set('mock_session_role', role, { path: '/' });
-        (await cookies()).set('mock_session_email', email, { path: '/' });
+        const cookieStore = await cookies();
+        const role = email.includes('admin') || email.includes('vmwendwa') ? 'admin' : 'buyer';
+        const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
+        cookieStore.set('mock_session_role', role, cookieOpts);
+        cookieStore.set('mock_session_email', email, cookieOpts);
         return { success: true, role, user: { id: 'mock-123', email } };
       }
       return { success: false, error: error.message };
@@ -55,9 +58,11 @@ export async function loginAction(values: LoginInput) {
     // If Supabase completely crashes due to ENOTFOUND
     console.error('Login action fallback used due to error:', err.message);
     const { cookies } = await import('next/headers');
-    const role = email.includes('admin') ? 'admin' : 'buyer';
-    (await cookies()).set('mock_session_role', role, { path: '/' });
-    (await cookies()).set('mock_session_email', email, { path: '/' });
+    const cookieStore = await cookies();
+    const role = email.includes('admin') || email.includes('vmwendwa') ? 'admin' : 'buyer';
+    const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
+    cookieStore.set('mock_session_role', role, cookieOpts);
+    cookieStore.set('mock_session_email', email, cookieOpts);
     return { success: true, role, user: { id: 'mock-123', email } };
   }
 }

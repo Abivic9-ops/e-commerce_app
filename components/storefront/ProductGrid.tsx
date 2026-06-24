@@ -8,12 +8,14 @@ import { StaggerItem } from '@/components/motion/StaggerItem';
 interface ProductGridProps {
   products: Product[];
   onAddToCart?: (product: Product) => void;
+  isLoggedIn?: boolean;
   className?: string;
 }
 
 export default function ProductGrid({
   products,
   onAddToCart,
+  isLoggedIn = false,
   className = '',
 }: ProductGridProps) {
   if (products.length === 0) {
@@ -30,7 +32,7 @@ export default function ProductGrid({
     >
       {products.map((product) => (
         <StaggerItem key={product.id}>
-          <ProductCard product={product} onAddToCart={onAddToCart} />
+          <ProductCard product={product} onAddToCart={onAddToCart} isLoggedIn={isLoggedIn} />
         </StaggerItem>
       ))}
     </StaggerContainer>

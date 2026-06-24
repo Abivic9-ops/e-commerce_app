@@ -8,6 +8,29 @@ export interface AuthUser {
   metadata: any;
 }
 
+function isAdminEmail(email: string): boolean {
+  if (!email) return false;
+  const adminEmail = process.env.ADMIN_EMAIL || '';
+  return adminEmail.toLowerCase() === email.toLowerCase();
+}
+
+async function readMockCookies(): Promise<AuthUser | null> {
+  try {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const role = cookieStore.get('mock_session_role')?.value;
+    const email = cookieStore.get('mock_session_email')?.value;
+    if (email) {
+      // Always override role for whitelisted admin emails
+      const resolvedRole = isAdminEmail(email) ? 'admin' : (role as 'admin' | 'buyer' || 'buyer');
+      return { id: 'mock-123', email, role: resolvedRole, metadata: {} };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Retrieves the current authenticated user session and returns clean user details.
  */
@@ -16,83 +39,30 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const isMock = supabaseUrl.includes('placeholder') || supabaseUrl.includes('fehhuobxogefrtfzgorj');
 
+    // Fast-path: bypass Supabase entirely for mock/offline environments
     if (isMock) {
-      // Fast-path mock auth to avoid 10-second DNS timeouts
-      const { cookies } = await import('next/headers');
-      const role = (await cookies()).get('mock_session_role')?.value;
-      const email = (await cookies()).get('mock_session_email')?.value;
-      if (role && email) {
-        return {
-          id: 'mock-123',
-          email,
-          role: role as 'admin' | 'buyer',
-          metadata: {},
-        };
-      }
-      return null;
+      return await readMockCookies();
     }
 
+    // Try real Supabase auth
     const supabase = await createClient();
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    // If network error, attempt to fallback to mock cookie session
-    if (error && (error.message.includes('fetch') || error.message.includes('getaddrinfo'))) {
-      const { cookies } = await import('next/headers');
-      const role = (await cookies()).get('mock_session_role')?.value;
-      const email = (await cookies()).get('mock_session_email')?.value;
-      if (role && email) {
-        return {
-          id: 'mock-123',
-          email,
-          role: role as 'admin' | 'buyer',
-          metadata: {},
-        };
-      }
-    }
+    const { data: { user }, error } = await supabase.auth.getUser();
 
     if (error || !user) {
-      // Still attempt mock auth for placeholder projects even without network error
-      const { cookies } = await import('next/headers');
-      const role = (await cookies()).get('mock_session_role')?.value;
-      const email = (await cookies()).get('mock_session_email')?.value;
-      if (role && email) {
-        return {
-          id: 'mock-123',
-          email,
-          role: role as 'admin' | 'buyer',
-          metadata: {},
-        };
-      }
-      return null;
+      // Supabase failed or returned no user — fallback to mock cookies
+      return await readMockCookies();
     }
 
-    return {
-      id: user.id,
-      email: user.email,
-      role: (user.user_metadata?.role as 'admin' | 'buyer') || 'buyer',
-      metadata: user.user_metadata,
-    };
-  } catch (error) {
-    console.error('Error in getCurrentUser (fallback to mock):', error);
-    try {
-      const { cookies } = await import('next/headers');
-      const role = (await cookies()).get('mock_session_role')?.value;
-      const email = (await cookies()).get('mock_session_email')?.value;
-      if (role && email) {
-        return {
-          id: 'mock-123',
-          email,
-          role: role as 'admin' | 'buyer',
-          metadata: {},
-        };
-      }
-    } catch (e) {
-      return null;
-    }
-    return null;
+    const email = user.email || '';
+    // Whitelist override even for real Supabase users
+    const role = isAdminEmail(email)
+      ? 'admin'
+      : ((user.user_metadata?.role as 'admin' | 'buyer') || 'buyer');
+
+    return { id: user.id, email, role, metadata: user.user_metadata };
+  } catch {
+    // Any crash — fall back to mock cookies
+    return await readMockCookies();
   }
 }
 
@@ -104,17 +74,19 @@ export async function requireRole(allowedRole: 'admin' | 'buyer'): Promise<AuthU
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect(`/login?redirectTo=${encodeURIComponent(allowedRole === 'admin' ? '/admin' : '/')}`);
+    // Not logged in — send to login with return URL
+    const returnTo = allowedRole === 'admin' ? '/admin' : '/';
+    redirect(`/login?redirectTo=${encodeURIComponent(returnTo)}`);
   }
 
-  if (user.role !== allowedRole) {
-    if (allowedRole === 'admin') {
-      // Regular buyers trying to access admin dashboard go to home
-      redirect('/');
-    } else {
-      // Admin trying to access buyer checkout, they might be allowed, but if not:
-      redirect('/login');
-    }
+  // Admins can access everything (admin panel + buyer pages like checkout)
+  if (user.role === 'admin') {
+    return user;
+  }
+
+  // Buyer trying to access admin-only pages
+  if (allowedRole === 'admin') {
+    redirect('/');
   }
 
   return user;

@@ -42,13 +42,20 @@ function LoginForm() {
       if (response.success) {
         toast.success('Login successful! Welcome back.');
         
-        const targetUrl = response.role === 'admin' ? '/admin' : redirectTo;
+        // Determine where to send the user after login
+        // - Admins always go to admin dashboard
+        // - Buyers go to the page they were on, but NEVER back to /login
+        let targetUrl = '/';
+        if (response.role === 'admin') {
+          targetUrl = '/admin';
+        } else if (redirectTo && redirectTo !== '/login' && redirectTo !== '/signup') {
+          targetUrl = redirectTo;
+        }
         
-        // Full page navigation ensures auth cookies from the Server Action response
-        // are available on the subsequent request
+        // Full page navigation ensures auth cookies are applied to the next request
         setTimeout(() => {
           window.location.href = targetUrl;
-        }, 500);
+        }, 600);
       } else {
         toast.error(response.error || 'Invalid email or password.');
       }
