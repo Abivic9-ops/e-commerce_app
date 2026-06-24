@@ -74,11 +74,11 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="hidden sm:flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-semibold rounded-full"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-semibold rounded-full px-2 sm:px-3"
             aria-label="Go Back"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            Back
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span className="hidden sm:inline">Back</span>
           </Button>
         )}
 

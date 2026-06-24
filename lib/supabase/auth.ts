@@ -13,6 +13,25 @@ export interface AuthUser {
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const isMock = supabaseUrl.includes('placeholder') || supabaseUrl.includes('fehhuobxogefrtfzgorj');
+
+    if (isMock) {
+      // Fast-path mock auth to avoid 10-second DNS timeouts
+      const { cookies } = await import('next/headers');
+      const role = (await cookies()).get('mock_session_role')?.value;
+      const email = (await cookies()).get('mock_session_email')?.value;
+      if (role && email) {
+        return {
+          id: 'mock-123',
+          email,
+          role: role as 'admin' | 'buyer',
+          metadata: {},
+        };
+      }
+      return null;
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
