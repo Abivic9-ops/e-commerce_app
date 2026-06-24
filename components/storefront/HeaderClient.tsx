@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ interface HeaderClientProps {
 
 export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,7 +53,7 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur-md transition-colors duration-200">
+    <header className="sticky top-0 z-40 w-full glass-effect shadow-xs transition-all duration-300">
       <div className="mx-auto flex max-w-7xl h-16 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
 
         {/* Mobile Menu Trigger */}
@@ -66,6 +67,20 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
+
+        {/* Global Back Button (Shows only on sub-pages) */}
+        {pathname !== '/' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="hidden sm:flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-semibold rounded-full"
+            aria-label="Go Back"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Back
+          </Button>
+        )}
 
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-1.5 focus:outline-none" id="brand-logo">
@@ -133,11 +148,35 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-full text-foreground/80 hover:text-foreground"
+            className="rounded-full overflow-hidden text-foreground/80 hover:text-foreground relative w-9 h-9 border border-transparent hover:border-border/50 hover:bg-secondary transition-all"
             aria-label="Toggle Theme"
             id="theme-toggle"
           >
-            {theme === 'dark' ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5" />}
+            <AnimatePresence mode="wait">
+              {theme === 'dark' ? (
+                <motion.div
+                  key="dark"
+                  initial={{ y: 20, opacity: 0, rotate: -90 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: -20, opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <Moon className="h-4 w-4 text-sky-400" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="light"
+                  initial={{ y: 20, opacity: 0, rotate: -90 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: -20, opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <Sun className="h-5 w-5 text-amber-500" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Button>
 
           {/* Favorites (Storefront visual link) */}

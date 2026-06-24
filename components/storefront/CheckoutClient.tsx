@@ -7,9 +7,11 @@ import { useCartStore } from '@/lib/store/useCartStore';
 import { formatKES } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShieldCheck, Truck, Lock, ArrowLeft, Loader2, Phone } from 'lucide-react';
+import { ShieldCheck, Truck, Lock, ArrowLeft, Loader2, Phone, Tag, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { getOrderById } from '@/app/actions/orders';
+import { validateCoupon } from '@/app/actions/coupons';
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -24,6 +26,10 @@ export default function CheckoutClient() {
     city: 'Nairobi',
   });
 
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; discountType: string; discountValue: number } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
   useEffect(() => {
     setIsMounted(true);
     if (items.length === 0) {
@@ -34,8 +40,28 @@ export default function CheckoutClient() {
   if (!isMounted || items.length === 0) return null;
 
   const subtotal = getCartTotal();
-  const shipping = 350; // Flat rate for Nairobi
-  const total = subtotal + shipping;
+  const shipping = 350;
+  const discount = couponApplied?.discountAmount ?? 0;
+  const total = subtotal + shipping - discount;
+
+  const handleCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    const result = await validateCoupon(couponCode.trim(), subtotal);
+    setCouponLoading(false);
+    if (result.success) {
+      setCouponApplied(result as any);
+      toast.success(`Coupon "${result.code}" applied! You save ${formatKES(result.discountAmount!)}`);
+    } else {
+      toast.error(result.error || 'Invalid coupon');
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponApplied(null);
+    setCouponCode('');
+    toast.info('Coupon removed');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,37 +83,85 @@ export default function CheckoutClient() {
     toast.info('Initiating M-Pesa STK Push...');
 
     try {
-      // Simulate API call to Daraja STK Push endpoint
+      // Map cart items for DB Order representation
+      const orderItems = items.map(item => ({
+        product: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+      }));
+
+      // Initiate STK Push and Order creation
       const res = await fetch('/api/mpesa/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: formattedPhone,
           amount: total,
-          // In real app, we'd send items too to create the order in DB
+          items: orderItems,
+          customerDetails: {
+            fullName: formData.fullName,
+            phone: formattedPhone,
+            address: formData.address,
+            city: formData.city,
+          },
+          subtotal,
+          shippingFee: shipping,
+          total,
         }),
       });
 
-      if (!res.ok) throw new Error('Payment initiation failed');
-      
       const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Payment initiation failed');
       
-      // Simulate waiting for user to enter PIN
-      toast.loading('Check your phone to enter M-Pesa PIN...', { duration: 5000 });
+      const toastId = toast.loading('Check your phone to enter M-Pesa PIN...', { duration: 60000 });
       
-      setTimeout(() => {
-        setIsProcessing(false);
-        clearCart();
-        toast.success('Payment successful!');
-        router.push('/checkout/success?orderId=ORD-' + Math.floor(100000 + Math.random() * 900000));
-      }, 5000);
+      const orderId = data.orderId;
+      let attempts = 0;
+      const maxAttempts = 30; // 60 seconds total polling
 
-    } catch (err) {
+      // Poll order confirmation state dynamically from DB
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const updatedOrder = await getOrderById(orderId);
+          if (updatedOrder) {
+            if (updatedOrder.paymentStatus === 'paid') {
+              clearInterval(pollInterval);
+              toast.dismiss(toastId);
+              toast.success('Payment verified successfully!');
+              setIsProcessing(false);
+              clearCart();
+              router.push(`/checkout/success?orderId=${orderId}`);
+            } else if (updatedOrder.paymentStatus === 'failed') {
+              clearInterval(pollInterval);
+              toast.dismiss(toastId);
+              toast.error('M-Pesa payment failed or was cancelled.');
+              setIsProcessing(false);
+            }
+          }
+        } catch (pollErr) {
+          console.error('Error polling order:', pollErr);
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          toast.dismiss(toastId);
+          toast.warning('Payment verification taking longer than expected. Redirecting to receipt page...');
+          setIsProcessing(false);
+          clearCart();
+          router.push(`/checkout/success?orderId=${orderId}`);
+        }
+      }, 2000);
+
+    } catch (err: any) {
       console.error(err);
-      toast.error('Failed to initiate payment. Try again.');
+      toast.error(err.message || 'Failed to initiate payment. Try again.');
       setIsProcessing(false);
     }
   };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -224,6 +298,41 @@ export default function CheckoutClient() {
             </div>
 
             <div className="border-t border-border/80 pt-4 space-y-3">
+              {/* Coupon Input */}
+              {!couponApplied ? (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Coupon code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCoupon()}
+                      className="w-full pl-9 pr-3 py-2 bg-background border border-border rounded-xl text-sm font-mono uppercase text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <button
+                    onClick={handleCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="px-3 py-2 bg-secondary hover:bg-secondary/80 text-foreground text-sm font-semibold rounded-xl border border-border disabled:opacity-50 transition-colors"
+                  >
+                    {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                  <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                    <Check className="h-4 w-4" />
+                    <span className="font-mono font-bold">{couponApplied.code}</span>
+                    <span className="text-xs">applied!</span>
+                  </div>
+                  <button onClick={removeCoupon} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-semibold">{formatKES(subtotal)}</span>
@@ -232,11 +341,18 @@ export default function CheckoutClient() {
                 <span className="text-muted-foreground">Shipping (Nairobi)</span>
                 <span className="font-semibold">{formatKES(shipping)}</span>
               </div>
+              {couponApplied && (
+                <div className="flex justify-between text-sm text-emerald-500">
+                  <span className="font-medium">Discount ({couponApplied.code})</span>
+                  <span className="font-bold">-{formatKES(couponApplied.discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-lg pt-2 border-t border-border">
                 <span className="font-bold text-foreground">Total</span>
                 <span className="font-black text-primary">{formatKES(total)}</span>
               </div>
             </div>
+
 
             <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4" />

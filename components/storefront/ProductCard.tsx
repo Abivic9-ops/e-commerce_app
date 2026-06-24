@@ -32,12 +32,12 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   return (
     <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.2 }}
-      className="group bg-card text-card-foreground border border-border/50 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg flex flex-col h-full transition-all duration-300"
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="group bg-card text-card-foreground border border-border/60 rounded-[1.25rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] flex flex-col h-full transition-all duration-300"
     >
       {/* Product Image Wrapper */}
-      <Link href={`/product/${product.id}`} className="relative aspect-square w-full bg-secondary/30 dark:bg-secondary/10 flex items-center justify-center p-4 overflow-hidden block">
+      <Link href={`/product/${product.id}`} className="relative aspect-square w-full bg-secondary/20 dark:bg-zinc-900/50 flex items-center justify-center p-6 overflow-hidden block">
         <Image
           src={product.image}
           alt={product.title}
@@ -48,7 +48,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         
         {/* Category Badge */}
         <div className="absolute top-3 left-3 z-10">
-          <Badge variant="secondary" className="backdrop-blur-md bg-white/70 dark:bg-zinc-950/70 border-none font-bold text-[10px] uppercase tracking-wider text-slate-800 dark:text-zinc-200">
+          <Badge variant="secondary" className="glass-effect font-bold text-[10px] uppercase tracking-widest text-foreground/90">
             {product.category}
           </Badge>
         </div>
@@ -56,7 +56,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         {/* Quick discount or deals indicator */}
         {product.stock <= 5 && (
           <div className="absolute top-3 right-3 z-10">
-            <Badge variant="destructive" className="animate-pulse text-[10px] uppercase font-extrabold tracking-wide">
+            <Badge variant="destructive" className="animate-pulse text-[10px] uppercase font-extrabold tracking-widest shadow-lg shadow-destructive/20">
               Limited Stock
             </Badge>
           </div>
@@ -130,10 +130,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 toast.success(`${product.title} added to cart!`);
               }
             }}
-            className="w-full mt-2 gap-2 font-semibold text-xs rounded-xl shadow-xs"
+            className="w-full mt-3 gap-2 font-bold text-xs rounded-xl shadow-xs hover:shadow-primary/20 transition-all h-10"
             id={`add-to-cart-${product.id}`}
           >
-            <ShoppingCart className="h-3.5 w-3.5" />
+            <ShoppingCart className="h-4 w-4" />
             Add to Cart
           </Button>
         </div>

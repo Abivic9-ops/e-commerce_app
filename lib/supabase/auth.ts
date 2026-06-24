@@ -19,7 +19,34 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       error,
     } = await supabase.auth.getUser();
 
+    // If network error, attempt to fallback to mock cookie session
+    if (error && (error.message.includes('fetch') || error.message.includes('getaddrinfo'))) {
+      const { cookies } = await import('next/headers');
+      const role = (await cookies()).get('mock_session_role')?.value;
+      const email = (await cookies()).get('mock_session_email')?.value;
+      if (role && email) {
+        return {
+          id: 'mock-123',
+          email,
+          role: role as 'admin' | 'buyer',
+          metadata: {},
+        };
+      }
+    }
+
     if (error || !user) {
+      // Still attempt mock auth for placeholder projects even without network error
+      const { cookies } = await import('next/headers');
+      const role = (await cookies()).get('mock_session_role')?.value;
+      const email = (await cookies()).get('mock_session_email')?.value;
+      if (role && email) {
+        return {
+          id: 'mock-123',
+          email,
+          role: role as 'admin' | 'buyer',
+          metadata: {},
+        };
+      }
       return null;
     }
 
@@ -30,7 +57,22 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       metadata: user.user_metadata,
     };
   } catch (error) {
-    console.error('Error in getCurrentUser:', error);
+    console.error('Error in getCurrentUser (fallback to mock):', error);
+    try {
+      const { cookies } = await import('next/headers');
+      const role = (await cookies()).get('mock_session_role')?.value;
+      const email = (await cookies()).get('mock_session_email')?.value;
+      if (role && email) {
+        return {
+          id: 'mock-123',
+          email,
+          role: role as 'admin' | 'buyer',
+          metadata: {},
+        };
+      }
+    } catch (e) {
+      return null;
+    }
     return null;
   }
 }

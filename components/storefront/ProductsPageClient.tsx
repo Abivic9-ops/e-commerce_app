@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, Star, ShoppingCart, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatKES } from '@/lib/utils';
@@ -23,26 +24,17 @@ interface Product {
   featured?: boolean;
 }
 
-// Rich product catalog with Jumia/Kilimall variety
-const PRODUCTS: Product[] = [
-  { id: 'windbreaker-rain-jacket', name: 'Windbreaker Rain Jacket - Waterproof Shell', category: 'Fashion', price: 3500, originalPrice: 5200, image: '/product_jacket.png', rating: 4.6, reviews: 124, stock: 4 },
-  { id: 'classic-felt-fedora', name: 'Classic Felt Fedora Hat – Ribbon Band', category: 'Fashion', price: 1800, originalPrice: 2500, image: '/product_hat.png', rating: 4.3, reviews: 78, stock: 9 },
-  { id: 'leather-messenger-bag', name: 'Leather Messenger Crossbody Bag', category: 'Bags', price: 4500, originalPrice: 6200, image: '/product_bag.png', rating: 4.8, reviews: 213, stock: 2 },
-  { id: 'ultra-cushion-sneakers', name: 'Ultra Cushion Sporty Running Sneakers', category: 'Shoes', price: 5200, originalPrice: 7800, image: '/product_shoes.png', rating: 4.7, reviews: 345, stock: 12 },
-  { id: 'shopeasy-phone-12-pro', name: 'ShopEasy Phone 12 Pro – 128GB, Triple Camera', category: 'Electronics', price: 18500, originalPrice: 24000, image: '/product_phone.png', rating: 4.5, reviews: 512, stock: 20, featured: true },
-  { id: 'stainless-glass-kettle', name: 'Premium Stainless Steel & Glass Electric Kettle', category: 'Home & Kitchen', price: 2900, originalPrice: 4000, image: '/product_kettle.png', rating: 4.4, reviews: 189, stock: 15 },
-  { id: 'windbreaker-yellow', name: 'Bold Yellow Windbreaker – Unisex Street Style', category: 'Fashion', price: 3200, originalPrice: 4500, image: '/product_jacket.png', rating: 4.2, reviews: 56, stock: 8 },
-  { id: 'suede-ankle-boots', name: 'Suede Ankle Boots – Kenyan Crafted', category: 'Shoes', price: 6500, originalPrice: 9000, image: '/product_shoes.png', rating: 4.6, reviews: 91, stock: 6 },
-  { id: 'wired-earphones-pro', name: 'Pro Bass Wired Earphones – Deep Sound', category: 'Electronics', price: 1200, originalPrice: 1800, image: '/product_phone.png', rating: 4.1, reviews: 430, stock: 50 },
-  { id: 'canvas-tote-bag', name: 'Eco Canvas Tote Shopper Bag – Printed', category: 'Bags', price: 850, originalPrice: 1200, image: '/product_bag.png', rating: 4.0, reviews: 67, stock: 35 },
-  { id: 'smart-blender', name: 'Smart Multi-Speed Blender – 1.5L Jug', category: 'Home & Kitchen', price: 3800, originalPrice: 5500, image: '/product_kettle.png', rating: 4.5, reviews: 143, stock: 10 },
-  { id: 'baseball-cap-navy', name: 'Classic Navy Baseball Cap – Embroidered Logo', category: 'Fashion', price: 950, originalPrice: 1400, image: '/product_hat.png', rating: 4.3, reviews: 98, stock: 22 },
-];
-
-const ALL_CATEGORIES = ['All', 'Fashion', 'Electronics', 'Shoes', 'Bags', 'Home & Kitchen'];
 const SORT_OPTIONS = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Top Rated', 'Most Reviews'];
 
-export default function ProductsPageClient() {
+interface ProductsPageClientProps {
+  initialProducts: any[];
+  initialCategories: any[];
+}
+
+export default function ProductsPageClient({ initialProducts, initialCategories }: ProductsPageClientProps) {
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get('category'); // reads category slug
+
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Newest');
@@ -50,8 +42,38 @@ export default function ProductsPageClient() {
   const [maxPrice, setMaxPrice] = useState(30000);
   const addItem = useCartStore(state => state.addItem);
 
+  // Map db products to UI interfaces
+  const products: Product[] = initialProducts.map((p: any) => ({
+    id: p.slug,
+    name: p.name,
+    category: typeof p.category === 'object' ? p.category.name : 'Unassigned',
+    price: p.price,
+    originalPrice: p.originalPrice,
+    image: p.images[0] || '/product_shoes.png',
+    rating: p.rating || 4.5,
+    reviews: p.reviewsCount || 10,
+    stock: p.stock,
+    featured: p.featured,
+  }));
+
+  const allCategories = ['All', ...initialCategories.map((c: any) => c.name)];
+
+  // Sync selectedCategory state with URL category query parameter
+  useEffect(() => {
+    if (categoryParam) {
+      const matched = initialCategories.find((c: any) => c.slug === categoryParam);
+      if (matched) {
+        setSelectedCategory(matched.name);
+      } else {
+        setSelectedCategory('All');
+      }
+    } else {
+      setSelectedCategory('All');
+    }
+  }, [categoryParam, initialCategories]);
+
   // Filter and sort
-  const filtered = PRODUCTS
+  const filtered = products
     .filter(p => {
       const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
       const matchCat = selectedCategory === 'All' || p.category === selectedCategory;
@@ -63,7 +85,7 @@ export default function ProductsPageClient() {
       if (sortBy === 'Price: High to Low') return b.price - a.price;
       if (sortBy === 'Top Rated') return b.rating - a.rating;
       if (sortBy === 'Most Reviews') return b.reviews - a.reviews;
-      return 0; // Newest is default order
+      return 0; // default (Newest)
     });
 
   const discount = (p: Product) => p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
@@ -74,7 +96,7 @@ export default function ProductsPageClient() {
       <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground">All Products</h1>
         <p className="text-sm text-muted-foreground">
-          Discover {PRODUCTS.length}+ curated items across fashion, electronics, home goods, and more — all with M-Pesa checkout.
+          Discover {products.length}+ curated items across fashion, electronics, home goods, and more — all with M-Pesa checkout.
         </p>
       </div>
 
@@ -154,7 +176,7 @@ export default function ProductsPageClient() {
                 <div className="space-y-3">
                   <label className="text-sm font-semibold text-foreground">Showing</label>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    <span className="font-bold text-foreground">{filtered.length}</span> of {PRODUCTS.length} products match your current filters and search query.
+                    <span className="font-bold text-foreground">{filtered.length}</span> of {products.length} products match your current filters and search query.
                   </p>
                   <button
                     onClick={() => { setSearch(''); setSelectedCategory('All'); setMaxPrice(30000); setSortBy('Newest'); }}
@@ -171,7 +193,7 @@ export default function ProductsPageClient() {
 
       {/* Category Tab Row */}
       <div className="flex gap-2 flex-wrap">
-        {ALL_CATEGORIES.map(cat => (
+        {allCategories.map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
