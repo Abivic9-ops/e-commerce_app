@@ -10,6 +10,7 @@ import { ShoppingCart, User, Sun, Moon, Search, Menu, Heart, LogOut } from 'luci
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import CartSheet from '@/components/storefront/CartSheet';
+import { NotificationBell } from '@/components/ui/notification-bell';
 import { logoutAction } from '@/app/actions/auth';
 import {
   DropdownMenu,
@@ -178,6 +179,9 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
               )}
             </AnimatePresence>
           </Button>
+
+          {/* Notifications */}
+          <NotificationBell />
 
           {/* Favorites (Storefront visual link) */}
           <Button

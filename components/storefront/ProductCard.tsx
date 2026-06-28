@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatKES } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useCartStore } from '@/lib/store/useCartStore';
+import { useNotificationStore } from '@/lib/store/useNotificationStore';
 import { toast } from 'sonner';
 
 export interface Product {
@@ -32,6 +33,7 @@ export default function ProductCard({ product, onAddToCart, isLoggedIn }: Produc
   const router = useRouter();
   const stockPercentage = (product.stock / product.maxStock) * 100;
   const addItem = useCartStore(state => state.addItem);
+  const addNotification = useNotificationStore(state => state.addNotification);
 
   return (
     <motion.div
@@ -135,6 +137,12 @@ export default function ProductCard({ product, onAddToCart, isLoggedIn }: Produc
               } else {
                 addItem({ id: product.id, name: product.title, price: product.price, image: product.image, quantity: 1 });
                 toast.success(`${product.title} added to cart!`);
+                addNotification({
+                  type: 'cart',
+                  title: 'Added to Cart',
+                  message: `${product.title} has been added to your cart.`,
+                  actionUrl: '/checkout',
+                });
               }
             }}
             className="w-full mt-3 gap-2 font-bold text-xs rounded-xl shadow-xs hover:shadow-primary/20 transition-all h-10"

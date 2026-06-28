@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCartStore } from '@/lib/store/useCartStore';
+import { useNotificationStore } from '@/lib/store/useNotificationStore';
 import { formatKES } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import { validateCoupon } from '@/app/actions/coupons';
 export default function CheckoutClient() {
   const router = useRouter();
   const { items, getCartTotal, clearCart } = useCartStore();
+  const addNotification = useNotificationStore(state => state.addNotification);
   const [isMounted, setIsMounted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -132,6 +134,12 @@ export default function CheckoutClient() {
               toast.dismiss(toastId);
               toast.success('Payment verified successfully!');
               setIsProcessing(false);
+              addNotification({
+                type: 'order',
+                title: 'Order Confirmed!',
+                message: `Your order #${orderId.slice(-8)} has been placed successfully. Track it in your orders.`,
+                actionUrl: '/orders',
+              });
               clearCart();
               router.push(`/checkout/success?orderId=${orderId}`);
             } else if (updatedOrder.paymentStatus === 'failed') {

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { formatKES } from '@/lib/utils';
 import { useCartStore } from '@/lib/store/useCartStore';
+import { useNotificationStore } from '@/lib/store/useNotificationStore';
 
 interface ProductDetailsInteractiveProps {
   product: {
@@ -21,6 +22,7 @@ interface ProductDetailsInteractiveProps {
 export function ProductDetailsInteractive({ product }: ProductDetailsInteractiveProps) {
   const [quantity, setQuantity] = useState(1);
   const addItem = useCartStore(state => state.addItem);
+  const addNotification = useNotificationStore(state => state.addNotification);
 
   const incrementQty = () => {
     if (quantity < product.stock) {
@@ -45,6 +47,12 @@ export function ProductDetailsInteractive({ product }: ProductDetailsInteractive
       quantity,
     });
     toast.success(`Added ${quantity} x ${product.name} to cart!`);
+    addNotification({
+      type: 'cart',
+      title: 'Added to Cart',
+      message: `${quantity} x ${product.name} added to your cart.`,
+      actionUrl: '/checkout',
+    });
   };
 
   return (

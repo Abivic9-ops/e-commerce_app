@@ -3,12 +3,13 @@
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, Bell, LogOut, Shield, User, Store } from 'lucide-react';
+import { Menu, LogOut, Shield, User, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { logoutAction } from '@/app/actions/auth';
 import { AuthUser } from '@/lib/supabase/auth';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/ui/notification-bell';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebar } from './AdminSidebar';
 import {
@@ -92,11 +93,8 @@ export function AdminTopbar({ user }: AdminTopbarProps) {
           </Button>
         </Link>
 
-        {/* Mock Notification Bell */}
-        <Button variant="ghost" size="icon" className="relative cursor-pointer text-muted-foreground hover:text-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-card animate-pulse" />
-        </Button>
+        {/* Notification Bell */}
+        <NotificationBell inAdmin />
 
         {/* User Dropdown */}
         <DropdownMenu>
