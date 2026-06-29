@@ -70,6 +70,7 @@ export async function proxy(request: NextRequest) {
   if (url.pathname.startsWith('/admin')) {
     if (!user) {
       url.pathname = '/login';
+      url.searchParams.set('redirectTo', '/admin');
       return NextResponse.redirect(url);
     }
 

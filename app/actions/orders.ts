@@ -136,8 +136,16 @@ export async function updateOrderStatus(id: string, deliveryStatus: string, paym
  * Admin action to retrieve dashboard KPIs
  */
 export async function getOrderStats() {
-  await requireRole('admin');
-  await connectToDatabase();
+  try {
+    await requireRole('admin');
+    await connectToDatabase();
+  } catch (error) {
+    console.error('Error in auth/db setup for order stats:', error);
+    return {
+      stats: { totalSales: 0, activeProducts: 0, pendingOrders: 0, customerCount: 0 },
+      recentOrders: []
+    };
+  }
 
   try {
     // 1. Total revenue (sum of total for Paid orders)

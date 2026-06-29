@@ -84,6 +84,7 @@ interface NotificationBellProps {
 
 export function NotificationBell({ inAdmin }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { notifications, getUnreadCount, markAsRead, markAllAsRead, dismissNotification, clearAll } =
     useNotificationStore();
@@ -92,6 +93,7 @@ export function NotificationBell({ inAdmin }: NotificationBellProps) {
   const hasNotifications = notifications.length > 0;
 
   useEffect(() => {
+    setHydrated(true);
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
@@ -111,11 +113,11 @@ export function NotificationBell({ inAdmin }: NotificationBellProps) {
             ? 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
             : 'text-foreground/80 hover:text-foreground border border-transparent hover:border-border/50 hover:bg-secondary'
         )}
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
         <AnimatePresence>
-          {unreadCount > 0 && (
+          {hydrated && unreadCount > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

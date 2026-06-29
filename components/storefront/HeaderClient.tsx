@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, User, Sun, Moon, Search, Menu, Heart, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Sun, Moon, Search, Menu, Heart, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import CartSheet from '@/components/storefront/CartSheet';
@@ -215,6 +215,13 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
                 <div className="px-2 py-1.5 text-sm font-medium text-foreground truncate select-none">
                   {user.email}
                 </div>
+                <DropdownMenuSeparator className="bg-border" />
+                <DropdownMenuItem asChild className="cursor-pointer font-medium">
+                  <Link href="/settings" className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={handleLogout}

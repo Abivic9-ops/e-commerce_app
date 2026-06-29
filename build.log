@@ -1,0 +1,28 @@
+﻿Γû▓ Next.js 16.2.9 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 83s
+  Running TypeScript ...
+node.exe : Failed to type check.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Failed to type check.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./app/(auth)/login/page.tsx:60:30
+Type error: Property 'error' does not exist on type '{ success: boolean; error?: string | undefined; role?: string | 
+undefined; user?: { id: string; email?: string | undefined; } | undefined; } | { success: boolean; role: any; user: { 
+id: string; email: string; }; }'.
+  Property 'error' does not exist on type '{ success: boolean; role: any; user: { id: string; email: string; }; }'.
+
+  [90m58 |[0m         }, [35m600[0m);
+  [90m59 |[0m       } [36melse[0m {
+[31m[1m>[0m [90m60 |[0m         toast.error(response.error || [32m'Invalid email or password.'[0m);
+  [90m   |[0m                              [31m[1m^[0m
+  [90m61 |[0m       }
+  [90m62 |[0m     } [36mcatch[0m (err) {
+  [90m63 |[0m       toast.error([32m'An error occurred. Please try again.'[0m);
+Next.js build worker exited with code: 1 and signal: null

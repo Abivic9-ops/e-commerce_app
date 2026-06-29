@@ -5,31 +5,35 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { loginSchema, signupSchema, LoginInput, SignupInput } from '@/lib/schemas/auth';
 import { ADMIN_EMAIL } from '@/lib/config';
 
-export async function loginAction(values: LoginInput) {
-  // 1. Validate input data
+export async function loginAction(values: LoginInput): Promise<{ success: false; error: string } | { success: true; role: string; user: { id: string; email?: string } }> {
   const validation = loginSchema.safeParse(values);
   if (!validation.success) {
-    return {
-      success: false,
-      error: 'Invalid input data. Please check your credentials.',
-    };
+    return { success: false, error: 'Invalid input data. Please check your credentials.' };
   }
 
   const { email, password } = validation.data;
 
-  // FALLBACK MOCK AUTH: If Supabase fails or is offline, use local cookie session
+  async function setMockSession(role: string) {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
+    cookieStore.set('mock_session_role', role, cookieOpts);
+    cookieStore.set('mock_session_email', email, cookieOpts);
+  }
+
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const isMock = supabaseUrl.includes('placeholder') || supabaseUrl.includes('fehhuobxogefrtfzgorj');
 
     if (isMock) {
-      const { cookies } = await import('next/headers');
-      const cookieStore = await cookies();
       const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
-      const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
-      cookieStore.set('mock_session_role', role, cookieOpts);
-      cookieStore.set('mock_session_email', email, cookieOpts);
-      return { success: true, role, user: { id: 'mock-123', email } };
+      try {
+        await setMockSession(role);
+        return { success: true, role, user: { id: 'mock-123', email } };
+      } catch (err: any) {
+        console.error('Mock login failed:', err.message);
+        return { success: false, error: 'Authentication service unavailable. Please try again.' };
+      }
     }
 
     const supabase = await createClient();
@@ -39,15 +43,15 @@ export async function loginAction(values: LoginInput) {
     });
 
     if (error) {
-      // If network error (Supabase down/placeholder), fallback to mock auth
       if (error.message.includes('fetch') || error.message.includes('getaddrinfo') || process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
-        const { cookies } = await import('next/headers');
-        const cookieStore = await cookies();
         const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
-        const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
-        cookieStore.set('mock_session_role', role, cookieOpts);
-        cookieStore.set('mock_session_email', email, cookieOpts);
-        return { success: true, role, user: { id: 'mock-123', email } };
+        try {
+          await setMockSession(role);
+          return { success: true, role, user: { id: 'mock-123', email } };
+        } catch (err: any) {
+          console.error('Mock login failed:', err.message);
+          return { success: false, error: 'Authentication service unavailable. Please try again.' };
+        }
       }
       return { success: false, error: error.message };
     }
@@ -59,15 +63,15 @@ export async function loginAction(values: LoginInput) {
       : (data.user?.user_metadata?.role || 'buyer');
     return { success: true, role, user: { id: data.user?.id, email: userEmail } };
   } catch (err: any) {
-    // If Supabase completely crashes due to ENOTFOUND
-    console.error('Login action fallback used due to error:', err.message);
-    const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
+    console.error('Login action error, falling back to mock:', err.message);
     const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
-    const cookieOpts = { path: '/', sameSite: 'lax' as const, maxAge: 60 * 60 * 24 * 7, httpOnly: true };
-    cookieStore.set('mock_session_role', role, cookieOpts);
-    cookieStore.set('mock_session_email', email, cookieOpts);
-    return { success: true, role, user: { id: 'mock-123', email } };
+    try {
+      await setMockSession(role);
+      return { success: true, role, user: { id: 'mock-123', email } };
+    } catch (err2: any) {
+      console.error('Mock login failed:', err2.message);
+      return { success: false, error: 'Authentication service unavailable. Please try again.' };
+    }
   }
 }
 
