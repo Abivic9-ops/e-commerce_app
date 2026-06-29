@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic';
 const fallbackFlashSaleProducts: Product[] = [
   {
     id: 'windbreaker-rain-jacket',
+    _id: 'windbreaker-rain-jacket',
     title: 'Windbreaker Rain Jacket - Waterproof Shell',
     category: 'Fashion',
     price: 3500,
@@ -28,6 +29,7 @@ const fallbackFlashSaleProducts: Product[] = [
   },
   {
     id: 'classic-felt-fedora',
+    _id: 'classic-felt-fedora',
     title: 'Classic Felt Fedora Hat with Ribbon Band',
     category: 'Fashion',
     price: 1800,
@@ -39,6 +41,7 @@ const fallbackFlashSaleProducts: Product[] = [
   },
   {
     id: 'leather-messenger-bag',
+    _id: 'leather-messenger-bag',
     title: 'Leather Messenger Crossbody Shoulder Bag',
     category: 'Bags',
     price: 4500,
@@ -50,6 +53,7 @@ const fallbackFlashSaleProducts: Product[] = [
   },
   {
     id: 'ultra-cushion-sneakers',
+    _id: 'ultra-cushion-sneakers',
     title: 'Ultra Cushion Sporty Running Sneakers',
     category: 'Shoes',
     price: 5200,
@@ -65,6 +69,7 @@ const fallbackFlashSaleProducts: Product[] = [
 const fallbackRecommendedProducts: Product[] = [
   {
     id: 'shopeasy-phone-12-pro',
+    _id: 'shopeasy-phone-12-pro',
     title: 'ShopEasy Phone 12 Pro - 128GB, Triple Camera',
     category: 'Electronics',
     price: 18500,
@@ -76,6 +81,7 @@ const fallbackRecommendedProducts: Product[] = [
   },
   {
     id: 'stainless-glass-kettle',
+    _id: 'stainless-glass-kettle',
     title: 'Premium Stainless Steel & Glass Electric Kettle',
     category: 'Electronics',
     price: 2900,
@@ -87,6 +93,7 @@ const fallbackRecommendedProducts: Product[] = [
   },
   {
     id: 'windbreaker-rain-jacket',
+    _id: 'windbreaker-rain-jacket',
     title: 'Windbreaker Rain Jacket - Waterproof Shell',
     category: 'Fashion',
     price: 3500,
@@ -98,6 +105,7 @@ const fallbackRecommendedProducts: Product[] = [
   },
   {
     id: 'ultra-cushion-sneakers',
+    _id: 'ultra-cushion-sneakers',
     title: 'Ultra Cushion Sporty Running Sneakers',
     category: 'Shoes',
     price: 5200,
@@ -109,6 +117,7 @@ const fallbackRecommendedProducts: Product[] = [
   },
   {
     id: 'leather-messenger-bag',
+    _id: 'leather-messenger-bag',
     title: 'Leather Messenger Crossbody Shoulder Bag',
     category: 'Bags',
     price: 4500,
@@ -120,6 +129,7 @@ const fallbackRecommendedProducts: Product[] = [
   },
   {
     id: 'classic-felt-fedora',
+    _id: 'classic-felt-fedora',
     title: 'Classic Felt Fedora Hat with Ribbon Band',
     category: 'Fashion',
     price: 1800,
