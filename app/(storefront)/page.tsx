@@ -139,7 +139,8 @@ export default async function StorefrontHomePage() {
 
   // Map db products to UI interfaces
   const mappedProducts: Product[] = dbProducts.map((p: any) => ({
-    id: p.slug, // Use slug for detail page URLs
+    id: p.slug,
+    _id: p._id,
     title: p.name,
     category: typeof p.category === 'object' ? p.category.name : 'Unassigned',
     price: p.price,
@@ -147,7 +148,7 @@ export default async function StorefrontHomePage() {
     rating: p.rating || 4.5,
     numReviews: p.reviewsCount || 10,
     stock: p.stock,
-    maxStock: p.stock + p.sold + 10, // Dynamic max calculation for progress bar visual
+    maxStock: p.stock + p.sold + 10,
   }));
 
   // Resolve visual items

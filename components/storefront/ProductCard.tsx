@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 
 export interface Product {
   id: string;
+  _id: string;
   title: string;
   category: string;
   price: number;
@@ -20,7 +21,7 @@ export interface Product {
   rating: number;
   numReviews: number;
   stock: number;
-  maxStock: number; // For progress bar visualization
+  maxStock: number;
 }
 
 interface ProductCardProps {
@@ -135,7 +136,7 @@ export default function ProductCard({ product, onAddToCart, isLoggedIn }: Produc
               if (onAddToCart) {
                 onAddToCart(product);
               } else {
-                addItem({ id: product.id, name: product.title, price: product.price, image: product.image, quantity: 1 });
+                addItem({ id: product._id, name: product.title, price: product.price, image: product.image, quantity: 1 });
                 toast.success(`${product.title} added to cart!`);
                 addNotification({
                   type: 'cart',

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import mongoose from 'mongoose';
 import { connectToDatabase } from '@/lib/db/mongoose';
 import { Order } from '@/lib/db/models/Order';
 import { Product } from '@/lib/db/models/Product';
@@ -66,7 +67,10 @@ export async function POST(req: Request) {
       // Decrement inventory stock & increment sold count
       console.log(`[PAYMENT VERIFIED] Order ${order.orderId} paid. Adjusting inventory...`);
       for (const item of order.items) {
-        const product = await Product.findById(item.product);
+        const isMongoId = mongoose.Types.ObjectId.isValid(item.product);
+        const product = isMongoId
+          ? await Product.findById(item.product)
+          : await Product.findOne({ slug: item.product });
         if (product) {
           product.stock = Math.max(0, product.stock - item.quantity);
           product.sold = (product.sold || 0) + item.quantity;

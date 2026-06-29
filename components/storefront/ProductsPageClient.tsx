@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 
 interface Product {
   id: string;
+  _id: string;
   name: string;
   category: string;
   price: number;
@@ -45,6 +46,7 @@ export default function ProductsPageClient({ initialProducts, initialCategories 
   // Map db products to UI interfaces
   const products: Product[] = initialProducts.map((p: any) => ({
     id: p.slug,
+    _id: p._id,
     name: p.name,
     category: typeof p.category === 'object' ? p.category.name : 'Unassigned',
     price: p.price,
@@ -283,7 +285,7 @@ export default function ProductsPageClient({ initialProducts, initialCategories 
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      addItem({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 });
+                      addItem({ id: product._id, name: product.name, price: product.price, image: product.image, quantity: 1 });
                       toast.success(`${product.name} added to cart!`);
                     }}
                     className="w-full flex items-center justify-center gap-1.5 mt-1 bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold py-2 rounded-xl transition-colors cursor-pointer"
