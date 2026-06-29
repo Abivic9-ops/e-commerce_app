@@ -114,7 +114,7 @@ export default function ProductsPageClient({ initialProducts, initialCategories 
             className="w-full pl-10 pr-4 py-2.5 bg-secondary/60 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <button onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
             </button>
           )}
@@ -254,7 +254,7 @@ export default function ProductsPageClient({ initialProducts, initialCategories 
                   )}
                   {product.featured && (
                     <span className="absolute bottom-2 left-2 bg-primary text-primary-foreground text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      ⭐ Featured
+                      Featured
                     </span>
                   )}
                 </div>

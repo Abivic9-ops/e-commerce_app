@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, Trash2, Plus, Minus, X } from 'lucide-react';
 import { useCartStore } from '@/lib/store/useCartStore';
-import { formatKES } from '@/lib/utils';
+import { formatKES, cn } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -15,7 +15,11 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 
-export default function CartSheet() {
+interface CartSheetProps {
+  inHeader?: boolean;
+}
+
+export default function CartSheet({ inHeader }: CartSheetProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { items, removeItem, updateQuantity, getCartTotal, getCartCount } = useCartStore();
 
@@ -26,7 +30,7 @@ export default function CartSheet() {
 
   if (!isMounted) {
     return (
-      <Button variant="ghost" size="icon" className="relative cursor-pointer">
+      <Button variant="ghost" size="icon" aria-label="Open cart" className={cn('relative cursor-pointer', inHeader && 'text-white/70 hover:text-white')}>
         <ShoppingCart className="h-5 w-5" />
       </Button>
     );
@@ -38,7 +42,7 @@ export default function CartSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative cursor-pointer">
+        <Button variant="ghost" size="icon" aria-label="Open cart" className={cn('relative cursor-pointer', inHeader && 'text-white/70 hover:text-white')}>
           <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
@@ -89,6 +93,7 @@ export default function CartSheet() {
                       <div className="flex items-center bg-background border border-border rounded-lg overflow-hidden">
                         <button
                           onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          aria-label="Decrease quantity"
                           className="px-2.5 py-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                         >
                           <Minus className="h-3.5 w-3.5" />
@@ -98,6 +103,7 @@ export default function CartSheet() {
                         </span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          aria-label="Increase quantity"
                           className="px-2.5 py-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" />
@@ -108,6 +114,7 @@ export default function CartSheet() {
 
                   <button
                     onClick={() => removeItem(item.id)}
+                    aria-label="Remove item"
                     className="absolute top-4 right-4 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4" />

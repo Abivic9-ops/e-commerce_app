@@ -80,9 +80,10 @@ function groupNotifications(
 
 interface NotificationBellProps {
   inAdmin?: boolean;
+  inHeader?: boolean;
 }
 
-export function NotificationBell({ inAdmin }: NotificationBellProps) {
+export function NotificationBell({ inAdmin, inHeader }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -109,9 +110,11 @@ export function NotificationBell({ inAdmin }: NotificationBellProps) {
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
           'relative flex items-center justify-center w-9 h-9 rounded-full transition-all',
-          inAdmin
-            ? 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-            : 'text-foreground/80 hover:text-foreground border border-transparent hover:border-border/50 hover:bg-secondary'
+          inHeader
+            ? 'text-white/70 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20'
+            : inAdmin
+              ? 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+              : 'text-foreground/80 hover:text-foreground border border-transparent hover:border-border/50 hover:bg-secondary'
         )}
         aria-label="Notifications"
       >
@@ -125,9 +128,11 @@ export function NotificationBell({ inAdmin }: NotificationBellProps) {
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               className={cn(
                 'absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-extrabold leading-none shadow-lg',
-                inAdmin
-                  ? 'bg-primary text-primary-foreground ring-2 ring-card'
-                  : 'bg-primary text-primary-foreground ring-2 ring-background'
+                inHeader
+                  ? 'bg-primary text-primary-foreground ring-2 ring-navy'
+                  : inAdmin
+                    ? 'bg-primary text-primary-foreground ring-2 ring-card'
+                    : 'bg-primary text-primary-foreground ring-2 ring-background'
               )}
             >
               {unreadCount > 99 ? '99+' : unreadCount}

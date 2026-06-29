@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { WishlistProvider } from '@/context/WishlistContext';
 import './globals.css';
 
 const inter = Inter({
@@ -15,7 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'ShopEasy | Premium Kenyan E-Commerce',
+  title: 'ShopEasy — Shop Beyond Boundaries',
   description: 'Shop premium fashion, electronics, and accessories. Fast deliveries and secure checkout via M-Pesa STK Push.',
   keywords: ['Kenya', 'E-commerce', 'M-Pesa', 'Daraja API', 'Online Shopping', 'Nairobi'],
   authors: [{ name: 'ShopEasy Team' }],
@@ -32,8 +33,10 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <ThemeProvider>
-          {children}
-          <Toaster richColors closeButton position="top-right" />
+          <WishlistProvider>
+            {children}
+            <Toaster richColors closeButton position="top-right" />
+          </WishlistProvider>
         </ThemeProvider>
       </body>
     </html>

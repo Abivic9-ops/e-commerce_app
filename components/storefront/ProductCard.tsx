@@ -1,27 +1,26 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Star, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { formatKES } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { Star, ShoppingCart, Heart } from 'lucide-react';
 import { useCartStore } from '@/lib/store/useCartStore';
-import { useNotificationStore } from '@/lib/store/useNotificationStore';
-import { toast } from 'sonner';
+import { useWishlist } from '@/context/WishlistContext';
+import { formatKsh } from '@/lib/utils';
 
 export interface Product {
   id: string;
   _id: string;
-  title: string;
+  name: string;
   category: string;
   price: number;
-  image: string;
+  originalPrice: number;
   rating: number;
-  numReviews: number;
-  stock: number;
-  maxStock: number;
+  reviews: number;
+  stockLeft: number;
+  image: string;
+  isFlashSale: boolean;
+  isLimited: boolean;
 }
 
 interface ProductCardProps {
@@ -31,128 +30,149 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAddToCart, isLoggedIn }: ProductCardProps) {
-  const router = useRouter();
-  const stockPercentage = (product.stock / product.maxStock) * 100;
   const addItem = useCartStore(state => state.addItem);
-  const addNotification = useNotificationStore(state => state.addNotification);
+  const { toggleItem, isInWishlist } = useWishlist();
+
+  const discountPercent = product.originalPrice > product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0;
+
+  const maxStock = 50;
+  const stockPercentage = Math.min((product.stockLeft / maxStock) * 100, 100);
+  const isOutOfStock = product.stockLeft === 0;
+  const inWishlist = isInWishlist(product.id);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirectTo=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+    if (onAddToCart) {
+      onAddToCart(product);
+    } else {
+      addItem({ id: product._id, name: product.name, price: product.price, image: product.image, quantity: 1 });
+    }
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItem({ id: product.id, name: product.name, price: product.price, image: product.image });
+  };
 
   return (
     <motion.div
-      whileHover={{ y: -8, scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="group bg-card text-card-foreground border border-border/60 rounded-[1.25rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] flex flex-col h-full transition-all duration-300"
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      className="bg-white rounded-2xl shadow-sm hover:shadow-md flex flex-col h-full overflow-hidden transition-shadow duration-300"
     >
-      {/* Product Image Wrapper */}
-      <Link href={`/product/${product.id}`} className="relative aspect-square w-full bg-secondary/20 dark:bg-zinc-900/50 flex items-center justify-center p-6 overflow-hidden block">
+      <div className="relative aspect-square bg-secondary/20 flex items-center justify-center overflow-hidden">
         <Image
           src={product.image}
-          alt={product.title}
+          alt={product.name}
           fill
-          className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-w-768px) 100vw, (max-w-1200px) 50vw, 25vw"
+          className="object-contain p-4"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
         />
-        
-        {/* Category Badge */}
+
         <div className="absolute top-3 left-3 z-10">
-          <Badge variant="secondary" className="glass-effect font-bold text-[10px] uppercase tracking-widest text-foreground/90">
+          <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md shadow-sm ${product.isFlashSale ? 'bg-royal text-white' : 'bg-white/90 text-foreground'}`}>
             {product.category}
-          </Badge>
+          </span>
         </div>
 
-        {/* Quick discount or deals indicator */}
-        {product.stock <= 5 && (
-          <div className="absolute top-3 right-3 z-10">
-            <Badge variant="destructive" className="animate-pulse text-[10px] uppercase font-extrabold tracking-widest shadow-lg shadow-destructive/20">
-              Limited Stock
-            </Badge>
+        {product.stockLeft <= 5 && product.stockLeft > 0 && (
+          <div className="absolute top-3 right-12 z-10">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest bg-red-600 text-white px-2 py-1 rounded-full animate-pulse shadow-lg">
+              LIMITED STOCK
+            </span>
           </div>
         )}
-      </Link>
 
-      {/* Product Info */}
-      <div className="p-4 flex flex-col flex-1 justify-between gap-3">
-        <div className="space-y-1.5">
-          {/* Rating */}
-          <div className="flex items-center gap-1">
-            <div className="flex text-amber-400">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-3 w-3 ${
-                    i < Math.floor(product.rating) ? 'fill-current' : 'text-slate-300 dark:text-zinc-700'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-[10px] font-semibold text-muted-foreground">
-              ({product.numReviews})
+        {discountPercent > 0 && (
+          <div className="absolute bottom-3 left-3 z-10">
+            <span className="text-xs font-extrabold bg-emerald-500 text-white px-2 py-1 rounded-md shadow-lg">
+              -{discountPercent}%
             </span>
           </div>
+        )}
 
-          {/* Title */}
-          <Link href={`/product/${product.id}`} className="block">
-            <h4 className="font-bold text-sm text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors duration-200">
-              {product.title}
-            </h4>
-          </Link>
-        </div>
+        <button
+          onClick={handleWishlistToggle}
+          aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+        >
+          <Heart
+            className={`h-4 w-4 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+          />
+        </button>
+      </div>
 
-        {/* Pricing & Stock progress (Jumia/Kilimall style) */}
-        <div className="space-y-2">
-          {/* Price */}
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-extrabold text-foreground">
-              {formatKES(product.price)}
-            </span>
-            <span className="text-[10px] text-muted-foreground line-through">
-              {formatKES(product.price * 1.3)}
-            </span>
-          </div>
+      <div className="p-4 flex flex-col flex-1 gap-2">
+        <h4 className="font-bold text-sm text-foreground leading-tight line-clamp-2">
+          {product.name}
+        </h4>
 
-          {/* Stock Progress Bar */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground">
-              <span>Stock: {product.stock} items left</span>
-              <span>{Math.round(stockPercentage)}%</span>
-            </div>
-            <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  product.stock <= 5 ? 'bg-rose-500' : 'bg-primary'
-                }`}
-                style={{ width: `${stockPercentage}%` }}
+        <div className="flex items-center gap-1">
+          <div className="flex text-amber-400">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={`h-3 w-3 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-gray-300'}`}
               />
-            </div>
+            ))}
           </div>
-
-          {/* Add to Cart CTA */}
-          <Button
-            onClick={(e) => {
-              e.preventDefault();
-              if (!isLoggedIn) {
-                router.push(`/login?redirectTo=${encodeURIComponent(window.location.pathname)}`);
-                return;
-              }
-              if (onAddToCart) {
-                onAddToCart(product);
-              } else {
-                addItem({ id: product._id, name: product.title, price: product.price, image: product.image, quantity: 1 });
-                toast.success(`${product.title} added to cart!`);
-                addNotification({
-                  type: 'cart',
-                  title: 'Added to Cart',
-                  message: `${product.title} has been added to your cart.`,
-                  actionUrl: '/checkout',
-                });
-              }
-            }}
-            className="w-full mt-3 gap-2 font-bold text-xs rounded-xl shadow-xs hover:shadow-primary/20 transition-all h-10"
-            id={`add-to-cart-${product.id}`}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Add to Cart
-          </Button>
+          <span className="text-[10px] font-semibold text-muted-foreground">
+            ({product.reviews})
+          </span>
         </div>
+
+        <div className="flex items-baseline gap-2">
+          <span className="text-base font-extrabold text-foreground">
+            {formatKsh(product.price)}
+          </span>
+          {product.originalPrice > product.price && (
+            <span className="text-xs text-muted-foreground line-through">
+              {formatKsh(product.originalPrice)}
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-1 mt-auto">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              Stock: {product.stockLeft} items left
+            </span>
+          </div>
+          <div className="h-1 w-full bg-secondary rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                product.stockLeft <= 5 ? 'bg-red-500' : 'bg-blue-600'
+              }`}
+              style={{ width: `${stockPercentage}%` }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          className={`w-full mt-2 flex items-center justify-center gap-2 font-bold text-xs rounded-xl h-10 transition-all ${
+            isOutOfStock
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-xs hover:shadow-md'
+          }`}
+        >
+          {isOutOfStock ? (
+            'Out of Stock'
+          ) : (
+            <>
+              <ShoppingCart className="h-4 w-4" />
+              Add to Cart
+            </>
+          )}
+        </button>
       </div>
     </motion.div>
   );

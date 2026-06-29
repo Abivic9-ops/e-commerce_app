@@ -1,11 +1,17 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Flame } from 'lucide-react';
+import { Zap, Timer } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ProductCard, { type Product } from './ProductCard';
 import { useNotificationStore } from '@/lib/store/useNotificationStore';
 
-export default function FlashSale() {
+interface FlashSaleProps {
+  products: Product[];
+  isLoggedIn?: boolean;
+}
+
+export default function FlashSale({ products, isLoggedIn = false }: FlashSaleProps) {
   const [timeLeft, setTimeLeft] = useState({
     hours: 2,
     minutes: 45,
@@ -42,7 +48,7 @@ export default function FlashSale() {
       notifSent.current.add('flash_10min');
       addNotification({
         type: 'flash_sale',
-        title: 'Last Chance! ⏳',
+        title: 'Last Chance!',
         message: 'Flash sale ends in 10 minutes. Final call on all deals!',
         actionUrl: '/#flash-sale',
       });
@@ -64,7 +70,6 @@ export default function FlashSale() {
         }
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -72,48 +77,76 @@ export default function FlashSale() {
 
   return (
     <div id="flash-sale" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="rounded-[2rem] bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 text-white p-6 sm:p-8 shadow-2xl shadow-orange-500/20 flex flex-col sm:flex-row items-center justify-between gap-6 overflow-hidden relative group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl pointer-events-none translate-x-1/2 -translate-y-1/2 transition-transform duration-700 group-hover:scale-125" />
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-yellow-300/30 rounded-full blur-2xl pointer-events-none" />
-        
-        <div className="flex items-center gap-4 z-10">
-          <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-            <Flame className="h-8 w-8 text-yellow-300 animate-pulse drop-shadow-md" />
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
+        {/* Jumia-style Flash Sale Banner */}
+        <div className="bg-gradient-to-r from-royal to-blue-800 rounded-t-2xl px-6 sm:px-10 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center shadow-inner">
+              <Zap className="h-6 w-6 text-yellow-300 drop-shadow-md" />
+            </div>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-gradient bg-gradient-to-r from-yellow-300 via-white to-yellow-300 bg-[200%_auto] animate-[gradient_4s_linear_infinite] drop-shadow-sm">
+                FLASH SALE
+              </h2>
+              <p className="text-sm text-blue-200 font-medium">
+                Up to 60% OFF — Limited time only
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-2xl font-black uppercase tracking-tight drop-shadow-sm">
-              Flash Sale
-            </h3>
-            <p className="text-sm text-white/90 font-medium drop-shadow-sm">
-              Grab deals before they expire! Up to 60% OFF.
-            </p>
+
+          <div className="flex items-center gap-3">
+            <Timer className="h-5 w-5 text-blue-200 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 bg-white/15 rounded-lg flex items-center justify-center font-black text-lg sm:text-xl tabular-nums text-white shadow-inner">
+                  {formatNumber(timeLeft.hours)}
+                </div>
+                <span className="text-[9px] tracking-widest uppercase font-bold text-blue-200 mt-1">Hrs</span>
+              </div>
+              <span className="font-bold text-xl text-white/60 -mt-4">:</span>
+              <div className="flex flex-col items-center">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 bg-white/15 rounded-lg flex items-center justify-center font-black text-lg sm:text-xl tabular-nums text-white shadow-inner">
+                  {formatNumber(timeLeft.minutes)}
+                </div>
+                <span className="text-[9px] tracking-widest uppercase font-bold text-blue-200 mt-1">Min</span>
+              </div>
+              <span className="font-bold text-xl text-white/60 -mt-4">:</span>
+              <div className="flex flex-col items-center">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 bg-white/15 rounded-lg flex items-center justify-center font-black text-lg sm:text-xl tabular-nums text-white shadow-inner">
+                  {formatNumber(timeLeft.seconds)}
+                </div>
+                <span className="text-[9px] tracking-widest uppercase font-bold text-blue-200 mt-1">Sec</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 z-10">
-          <div className="flex flex-col items-center">
-            <div className="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl tabular-nums shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]">
-              {formatNumber(timeLeft.hours)}
+        {/* Product Grid */}
+        <div className="bg-card border-x border-b border-border/60 rounded-b-2xl p-4 sm:p-6">
+          {products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-muted-foreground">No flash sale products available</p>
             </div>
-            <span className="text-[10px] tracking-widest uppercase font-bold text-white/90 mt-2">Hours</span>
-          </div>
-          <span className="font-bold text-2xl -mt-6 text-white/70">:</span>
-          <div className="flex flex-col items-center">
-            <div className="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl tabular-nums shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]">
-              {formatNumber(timeLeft.minutes)}
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {products.map((product, idx) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                >
+                  <ProductCard product={product} isLoggedIn={isLoggedIn} />
+                </motion.div>
+              ))}
             </div>
-            <span className="text-[10px] tracking-widest uppercase font-bold text-white/90 mt-2">Mins</span>
-          </div>
-          <span className="font-bold text-2xl -mt-6 text-white/70">:</span>
-          <div className="flex flex-col items-center">
-            <div className="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl tabular-nums shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)] text-yellow-200">
-              {formatNumber(timeLeft.seconds)}
-            </div>
-            <span className="text-[10px] tracking-widest uppercase font-bold text-white/90 mt-2">Secs</span>
-          </div>
+          )}
         </div>
-
-      </div>
+      </motion.div>
     </div>
   );
 }

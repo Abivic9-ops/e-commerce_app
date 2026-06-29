@@ -7,34 +7,48 @@ import { StaggerItem } from '@/components/motion/StaggerItem';
 
 interface ProductGridProps {
   products: Product[];
-  onAddToCart?: (product: Product) => void;
+  title?: string;
+  subtitle?: string;
   isLoggedIn?: boolean;
-  className?: string;
 }
 
 export default function ProductGrid({
   products,
-  onAddToCart,
+  title,
+  subtitle,
   isLoggedIn = false,
-  className = '',
 }: ProductGridProps) {
   if (products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border border-dashed border-border rounded-2xl">
-        <p className="text-sm">No products found matching your description.</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-border rounded-2xl">
+        <p className="text-muted-foreground text-lg">No products found</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 text-sm text-primary hover:underline cursor-pointer"
+        >
+          Reset filters
+        </button>
       </div>
     );
   }
 
   return (
-    <StaggerContainer
-      className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${className}`}
-    >
-      {products.map((product) => (
-        <StaggerItem key={product.id}>
-          <ProductCard product={product} onAddToCart={onAddToCart} isLoggedIn={isLoggedIn} />
-        </StaggerItem>
-      ))}
-    </StaggerContainer>
+    <section>
+      {title && (
+        <div className="mb-8 text-center sm:text-left">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{title}</h2>
+          {subtitle && (
+            <p className="mt-2 text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
+      )}
+      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.map((product) => (
+          <StaggerItem key={product.id}>
+            <ProductCard product={product} isLoggedIn={isLoggedIn} />
+          </StaggerItem>
+        ))}
+      </StaggerContainer>
+    </section>
   );
 }

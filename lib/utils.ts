@@ -19,3 +19,13 @@ export function formatKES(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+/**
+ * Formats a number to Ksh short format (e.g. "Ksh 3,500")
+ */
+export function formatKsh(amount: number): string {
+  return `Ksh ${new Intl.NumberFormat('en-KE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)}`;
+}

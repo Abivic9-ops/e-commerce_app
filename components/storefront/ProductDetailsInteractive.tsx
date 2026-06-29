@@ -65,6 +65,7 @@ export function ProductDetailsInteractive({ product }: ProductDetailsInteractive
           <div className="flex items-center border border-border rounded-xl bg-background overflow-hidden">
             <button
               onClick={decrementQty}
+              aria-label="Decrease quantity"
               className="px-3.5 py-2.5 hover:bg-secondary text-foreground transition-colors cursor-pointer border-r border-border"
               disabled={product.stock === 0}
             >
@@ -75,6 +76,7 @@ export function ProductDetailsInteractive({ product }: ProductDetailsInteractive
             </span>
             <button
               onClick={incrementQty}
+              aria-label="Increase quantity"
               className="px-3.5 py-2.5 hover:bg-secondary text-foreground transition-colors cursor-pointer border-l border-border"
               disabled={product.stock === 0}
             >

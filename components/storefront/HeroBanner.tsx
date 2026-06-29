@@ -32,8 +32,8 @@ export default function HeroBanner() {
       <div className="relative rounded-[2rem] bg-card dark:bg-card border border-border/80 shadow-2xl shadow-primary/5 overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 sm:p-12 lg:p-16 gap-8 min-h-[380px] sm:min-h-[460px] group">
         
         {/* Background Gradients for depth */}
-        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-violet-500/10 rounded-full blur-[80px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-royal/10 rounded-full blur-[100px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[80px] pointer-events-none transition-transform duration-700 group-hover:scale-110" />
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-background/5 pointer-events-none" />
 
         {/* Hero Text Content */}
@@ -42,9 +42,9 @@ export default function HeroBanner() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-royal px-4 py-1.5 bg-royal/10 border border-royal/20 rounded-full"
           >
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-royal animate-pulse" />
             New Arrivals Available
           </motion.div>
           <motion.h2
@@ -54,7 +54,7 @@ export default function HeroBanner() {
             className="text-4xl font-black tracking-tight text-foreground sm:text-5xl lg:text-6xl leading-[1.1]"
           >
             Discover True <br />
-            <span className="text-gradient bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto] animate-[gradient_4s_linear_infinite]">
+            <span className="text-gradient bg-gradient-to-r from-royal via-blue-400 to-royal bg-[200%_auto] animate-[gradient_4s_linear_infinite]">
               Elegance.
             </span>
           </motion.h2>

@@ -28,6 +28,7 @@ export async function POST(req: Request) {
 
     let merchantRequestId = 'MRQ-' + Math.floor(100000 + Math.random() * 900000);
     let checkoutRequestId = 'ws_CO_' + Date.now();
+    let useSimulator = isSimulator;
 
     // 1. If live production / sandbox credentials exist
     if (!isSimulator) {
@@ -87,6 +88,7 @@ export async function POST(req: Request) {
         checkoutRequestId = stkPushData.CheckoutRequestID;
       } catch (err: any) {
         console.error('[M-PESA DARAJA CLIENT ERROR] Falling back to simulation due to:', err.message);
+        useSimulator = true;
       }
     }
 
@@ -117,7 +119,7 @@ export async function POST(req: Request) {
     console.log(`[ORDER CREATED] Saved pending order ${orderId} associated with checkout: ${checkoutRequestId}`);
 
     // 3. If in simulator fallback mode, trigger self-callback after 5 seconds to mock payment confirmation
-    if (isSimulator) {
+    if (useSimulator) {
       setTimeout(async () => {
         try {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

@@ -1,36 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  /* Ultra-clean modern light theme */
-  --background: oklch(0.99 0.005 260); /* Very soft pearl/blue-ish white */
-  --foreground: oklch(0.14 0.02 260); /* Deep slate charcoal */
+  --bg-base: #F7F6F3;
+  --surface: #FFFFFF;
+  --navy: #0F1B2D;
+  --royal: #2563EB;
+  --amber: #D9A441;
+  --emerald: #059669;
+
+  --background: #F7F6F3;
+  --foreground: #0F1B2D;
   
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.14 0.02 260);
+  --card: #FFFFFF;
+  --card-foreground: #0F1B2D;
   
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.14 0.02 260);
+  --popover: #FFFFFF;
+  --popover-foreground: #0F1B2D;
   
-  --primary: oklch(0.55 0.25 270); /* Vibrant royal blue/indigo */
-  --primary-foreground: oklch(0.98 0 0);
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
   
-  --secondary: oklch(0.96 0.01 260);
-  --secondary-foreground: oklch(0.2 0.02 260);
+  --secondary: #F0EFED;
+  --secondary-foreground: #0F1B2D;
   
-  --muted: oklch(0.96 0.01 260);
-  --muted-foreground: oklch(0.45 0.02 260);
+  --muted: #F0EFED;
+  --muted-foreground: #6B7280;
   
-  --accent: oklch(0.96 0.01 260);
-  --accent-foreground: oklch(0.2 0.02 260);
+  --accent: #F0EFED;
+  --accent-foreground: #0F1B2D;
   
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
   
-  --border: oklch(0.92 0.01 260);
-  --input: oklch(0.92 0.01 260);
-  --ring: oklch(0.55 0.25 270);
+  --border: #E5E4E2;
+  --input: #E5E4E2;
+  --ring: #2563EB;
   
-  --radius: 1rem; /* rounded-2xl feel by default */
+  --radius: 0.75rem;
 }
 
 /* Storefront Dark Mode (active when .dark is present) */
@@ -97,6 +103,13 @@
 }
 
 @theme {
+  --color-bg-base: #F7F6F3;
+  --color-surface: #FFFFFF;
+  --color-navy: #0F1B2D;
+  --color-royal: #2563EB;
+  --color-amber: #D9A441;
+  --color-emerald: #059669;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
@@ -176,5 +189,11 @@ body {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 

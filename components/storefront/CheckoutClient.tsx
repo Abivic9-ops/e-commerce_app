@@ -335,7 +335,7 @@ export default function CheckoutClient() {
                     <span className="font-mono font-bold">{couponApplied.code}</span>
                     <span className="text-xs">applied!</span>
                   </div>
-                  <button onClick={removeCoupon} className="text-muted-foreground hover:text-destructive transition-colors">
+                  <button onClick={removeCoupon} aria-label="Remove coupon" className="text-muted-foreground hover:text-destructive transition-colors">
                     <X className="h-4 w-4" />
                   </button>
                 </div>

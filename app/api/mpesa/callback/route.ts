@@ -89,6 +89,7 @@ export async function POST(req: Request) {
     // Refresh Next.js caches
     revalidatePath('/');
     revalidatePath('/admin');
+    revalidatePath('/admin/orders');
     revalidatePath('/orders');
 
     return NextResponse.json({ message: 'Callback processed successfully' }, { status: 200 });
