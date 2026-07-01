@@ -57,7 +57,7 @@ function LoginForm() {
           window.location.href = targetUrl;
         }, 600);
       } else {
-        toast.error(response.error || 'Invalid email or password.');
+        toast.error(response.error ?? 'Invalid email or password.');
       }
     } catch (err) {
       toast.error('An error occurred. Please try again.');

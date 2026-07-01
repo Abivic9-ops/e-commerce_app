@@ -5,7 +5,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { loginSchema, signupSchema, LoginInput, SignupInput } from '@/lib/schemas/auth';
 import { ADMIN_EMAIL } from '@/lib/config';
 
-export async function loginAction(values: LoginInput): Promise<{ success: false; error: string } | { success: true; role: string; user: { id: string; email?: string } }> {
+type LoginResponse = { success: false; error: string } | { success: true; error?: never; role: string; user: { id: string; email?: string } };
+
+export async function loginAction(values: LoginInput): Promise<LoginResponse> {
   const validation = loginSchema.safeParse(values);
   if (!validation.success) {
     return { success: false, error: 'Invalid input data. Please check your credentials.' };
