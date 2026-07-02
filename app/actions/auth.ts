@@ -25,7 +25,7 @@ export async function loginAction(values: LoginInput): Promise<LoginResponse> {
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const isMock = supabaseUrl.includes('placeholder') || supabaseUrl.includes('fehhuobxogefrtfzgorj');
+    const isMock = supabaseUrl.includes('placeholder') || process.env.AUTH_MOCK === 'true';
 
     if (isMock) {
       const role = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'buyer';
@@ -130,7 +130,7 @@ export async function signupAction(values: SignupInput) {
 export async function logoutAction() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const isMock = supabaseUrl.includes('placeholder') || supabaseUrl.includes('fehhuobxogefrtfzgorj');
+    const isMock = supabaseUrl.includes('placeholder') || process.env.AUTH_MOCK === 'true';
 
     // Always clear mock cookies as well
     const { cookies } = await import('next/headers');

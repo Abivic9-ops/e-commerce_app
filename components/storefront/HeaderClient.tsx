@@ -176,10 +176,9 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
             <NotificationBell inHeader />
 
             {/* Favorites / Wishlist */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:inline-flex rounded-full text-white/70 hover:text-white hover:bg-white/10 relative"
+            <Link
+              href="/wishlist"
+              className="hidden sm:inline-flex relative rounded-full text-white/70 hover:text-white hover:bg-white/10 items-center justify-center h-10 w-10"
               aria-label="Wishlist"
               id="wishlist-button"
             >
@@ -189,7 +188,7 @@ export default function HeaderClient({ user, isAdmin }: HeaderClientProps) {
                   {wishlistCount}
                 </span>
               )}
-            </Button>
+            </Link>
 
             {/* Account Menu */}
             {user ? (

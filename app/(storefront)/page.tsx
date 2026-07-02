@@ -9,7 +9,8 @@ import ProductGrid from '@/components/storefront/ProductGrid';
 import Footer from '@/components/storefront/Footer';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { getCurrentUser } from '@/lib/supabase/auth';
-import { products as storeProducts } from '@/data/products';
+import { getProducts } from '@/app/actions/products';
+import { getCategories } from '@/app/actions/categories';
 import { type Product } from '@/components/storefront/ProductCard';
 
 export const dynamic = 'force-dynamic';
@@ -18,38 +19,32 @@ export default async function StorefrontHomePage() {
   const user = await getCurrentUser();
   const isLoggedIn = !!user;
 
-  const flashSaleProducts: Product[] = storeProducts
-    .filter(p => p.isFlashSale)
-    .map(p => ({
-      id: p.id,
-      _id: p.id,
-      name: p.name,
-      category: p.category,
-      price: p.price,
-      originalPrice: p.originalPrice,
-      rating: p.rating,
-      reviews: p.reviews,
-      stockLeft: p.stockLeft,
-      image: p.image,
-      isFlashSale: p.isFlashSale,
-      isLimited: p.isLimited,
-    }));
+  const [allProducts, allCategories] = await Promise.all([
+    getProducts({ limit: 50 }),
+    getCategories(),
+  ]);
 
-  const recommendedProducts: Product[] = storeProducts
-    .map(p => ({
-      id: p.id,
-      _id: p.id,
-      name: p.name,
-      category: p.category,
-      price: p.price,
-      originalPrice: p.originalPrice,
-      rating: p.rating,
-      reviews: p.reviews,
-      stockLeft: p.stockLeft,
-      image: p.image,
-      isFlashSale: p.isFlashSale,
-      isLimited: p.isLimited,
-    }));
+  const mapToProduct = (p: any): Product => ({
+    _id: p._id,
+    name: p.name,
+    category: typeof p.category === 'object' && p.category ? p.category.name : 'Unassigned',
+    price: p.price,
+    originalPrice: p.originalPrice,
+    rating: p.rating,
+    reviewsCount: p.reviewsCount,
+    stock: p.stock,
+    images: p.images?.length ? p.images : [],
+    featured: p.featured,
+    slug: p.slug,
+    description: p.description,
+    sold: p.sold,
+  });
+
+  const flashSaleProducts: Product[] = allProducts
+    .filter(p => p.featured)
+    .map(mapToProduct);
+
+  const recommendedProducts: Product[] = allProducts.map(mapToProduct);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -61,7 +56,7 @@ export default async function StorefrontHomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="hidden md:block w-56 flex-shrink-0">
-                <CategorySidebar />
+                <CategorySidebar categories={allCategories} />
               </div>
               <div className="flex-1 min-w-0">
                 <HeroCarousel />
@@ -75,7 +70,7 @@ export default async function StorefrontHomePage() {
 
         <FadeIn>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <CategoryStrip />
+            <CategoryStrip categories={allCategories} />
           </div>
         </FadeIn>
 

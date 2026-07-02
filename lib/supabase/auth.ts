@@ -37,7 +37,7 @@ async function readMockCookies(): Promise<AuthUser | null> {
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const isMock = supabaseUrl.includes('placeholder') || supabaseUrl.includes('fehhuobxogefrtfzgorj');
+    const isMock = supabaseUrl.includes('placeholder') || process.env.AUTH_MOCK === 'true';
 
     // Fast-path: bypass Supabase entirely for mock/offline environments
     if (isMock) {

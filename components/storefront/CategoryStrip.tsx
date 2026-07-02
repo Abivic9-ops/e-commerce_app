@@ -5,25 +5,37 @@ import Link from 'next/link';
 import { Shirt, ShoppingBag, Watch, Laptop, Tag, TrendingUp, Package, Grid } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const categories = [
-  { name: 'T-Shirts', icon: Shirt, href: '/products?category=fashion' },
-  { name: 'Bags', icon: ShoppingBag, href: '/products?category=bags' },
-  { name: 'Watches', icon: Watch, href: '/products?category=fashion' },
-  { name: 'Electronics', icon: Laptop, href: '/products?category=electronics' },
-  { name: 'Deals', icon: Tag, href: '/products' },
-  { name: 'Trending', icon: TrendingUp, href: '/products' },
-  { name: 'Essentials', icon: Package, href: '/products' },
-  { name: 'All Categories', icon: Grid, href: '/products' },
-];
+interface Category {
+  name: string;
+  slug: string;
+}
 
-export default function CategoryStrip() {
+interface CategoryStripProps {
+  categories: Category[];
+}
+
+const iconMap: Record<string, React.ElementType> = {
+  'Fashion': Shirt,
+  'Bags': ShoppingBag,
+  'Watches': Watch,
+  'Electronics': Laptop,
+  'Shoes': Shirt,
+  'Home & Kitchen': Shirt,
+  'Deals': Tag,
+  'Trending': TrendingUp,
+  'Essentials': Package,
+};
+
+export default function CategoryStrip({ categories }: CategoryStripProps) {
+  const displayCats = categories.slice(0, 8);
+
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto w-full">
       <div className="flex items-center gap-6 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-        {categories.map((cat, idx) => {
-          const Icon = cat.icon;
+        {displayCats.map((cat, idx) => {
+          const Icon = iconMap[cat.name] || Tag;
           return (
-            <Link key={cat.name} href={cat.href} className="flex-shrink-0">
+            <Link key={cat.name} href={`/products?category=${cat.slug}`} className="flex-shrink-0">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

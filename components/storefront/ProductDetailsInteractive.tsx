@@ -43,7 +43,7 @@ export function ProductDetailsInteractive({ product }: ProductDetailsInteractive
       id: product._id,
       name: product.name,
       price: product.price,
-      image: product.images[0] || '/product_shoes.png',
+      image: product.images[0] || '',
       quantity,
     });
     toast.success(`Added ${quantity} x ${product.name} to cart!`);

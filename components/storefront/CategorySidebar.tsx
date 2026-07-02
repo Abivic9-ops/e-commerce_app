@@ -18,27 +18,35 @@ import {
   Grid,
 } from 'lucide-react';
 
+interface Category {
+  name: string;
+  slug: string;
+}
+
 interface CategorySidebarProps {
+  categories: Category[];
   selectedCategory?: string;
   onSelectCategory?: (category: string) => void;
 }
 
-const categories = [
-  { name: 'T-Shirts', slug: 't-shirts', icon: Shirt },
-  { name: 'Bags', slug: 'bags', icon: ShoppingBag },
-  { name: 'Watches', slug: 'watches', icon: Watch },
-  { name: 'Electronics', slug: 'electronics', icon: Laptop },
-  { name: 'Phones', slug: 'phones', icon: Smartphone },
-  { name: 'Home & Kitchen', slug: 'home-kitchen', icon: Home },
-  { name: 'Shoes', slug: 'shoes', icon: Footprints },
-  { name: 'Deals', slug: 'deals', icon: Tag },
-  { name: 'Trending', slug: 'trending', icon: TrendingUp },
-  { name: 'Essentials', slug: 'essentials', icon: Package },
-  { name: 'All Categories', slug: '', icon: Grid },
-];
+const iconMap: Record<string, React.ElementType> = {
+  'Fashion': Shirt,
+  'Bags': ShoppingBag,
+  'Watches': Watch,
+  'Electronics': Laptop,
+  'Phones': Smartphone,
+  'Home & Kitchen': Home,
+  'Shoes': Footprints,
+  'Deals': Tag,
+  'Trending': TrendingUp,
+  'Essentials': Package,
+  'All Categories': Grid,
+};
 
-export default function CategorySidebar({ selectedCategory, onSelectCategory }: CategorySidebarProps) {
+export default function CategorySidebar({ categories, selectedCategory, onSelectCategory }: CategorySidebarProps) {
   const pathname = usePathname();
+
+  const allCategories = [{ name: 'All Categories', slug: '' }, ...categories];
 
   return (
     <aside className="hidden md:block w-64 shrink-0">
@@ -47,8 +55,8 @@ export default function CategorySidebar({ selectedCategory, onSelectCategory }: 
           <h3 className="text-sm font-bold text-foreground tracking-tight">Categories</h3>
         </div>
         <div className="overflow-y-auto max-h-[calc(100vh-12rem)] py-1">
-          {categories.map((cat) => {
-            const Icon = cat.icon;
+          {allCategories.map((cat) => {
+            const Icon = iconMap[cat.name] || Tag;
             const href = cat.slug ? `/products?category=${cat.slug}` : '/products';
             const isActive = selectedCategory === cat.slug || (!selectedCategory && !cat.slug);
 
