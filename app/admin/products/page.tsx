@@ -1,5 +1,5 @@
 import React from 'react';
-import { getProducts } from '@/app/actions/products';
+import { getProducts, getProductCustomerCounts } from '@/app/actions/products';
 import { getCategories } from '@/app/actions/categories';
 import { ProductsClient } from '@/components/admin/ProductsClient';
 
@@ -9,11 +9,13 @@ export const dynamic = 'force-dynamic';
 export default async function AdminProductsPage() {
   const initialProducts = await getProducts();
   const initialCategories = await getCategories();
+  const customerCounts = await getProductCustomerCounts();
 
   return (
     <ProductsClient 
       initialProducts={initialProducts} 
-      initialCategories={initialCategories} 
+      initialCategories={initialCategories}
+      initialCustomerCounts={customerCounts}
     />
   );
 }

@@ -90,6 +90,7 @@ export async function POST(req: Request) {
     revalidatePath('/');
     revalidatePath('/admin');
     revalidatePath('/admin/orders');
+    revalidatePath('/admin/payments');
     revalidatePath('/orders');
 
     return NextResponse.json({ message: 'Callback processed successfully' }, { status: 200 });

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { connectToDatabase } from '@/lib/db/mongoose';
 import { Product } from '@/lib/db/models/Product';
 import { Category } from '@/lib/db/models/Category';
+import { Order } from '@/lib/db/models/Order';
 import { requireRole } from '@/lib/supabase/auth';
 
 interface ProductInput {
@@ -158,6 +159,48 @@ export async function updateProduct(id: string, formData: ProductInput) {
 /**
  * Admin action to delete a product.
  */
+/**
+ * Admin action to get unique customer counts per product from order history.
+ * Returns a map: { productId: { uniqueCustomers: number, totalUnitsSold: number } }
+ */
+export async function getProductCustomerCounts() {
+  await requireRole('admin');
+  try {
+    await connectToDatabase();
+
+    const aggregation = await Order.aggregate([
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.product',
+          uniqueCustomers: { $addToSet: '$customerDetails.phone' },
+          totalUnitsSold: { $sum: '$items.quantity' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          productId: '$_id',
+          uniqueCustomers: { $size: '$uniqueCustomers' },
+          totalUnitsSold: 1,
+        },
+      },
+    ]);
+
+    const result: Record<string, { uniqueCustomers: number; totalUnitsSold: number }> = {};
+    for (const entry of aggregation) {
+      result[entry.productId] = {
+        uniqueCustomers: entry.uniqueCustomers,
+        totalUnitsSold: entry.totalUnitsSold,
+      };
+    }
+    return result;
+  } catch (error) {
+    console.error('Error getting product customer counts:', error);
+    return {};
+  }
+}
+
 export async function deleteProduct(id: string) {
   await requireRole('admin');
   await connectToDatabase();

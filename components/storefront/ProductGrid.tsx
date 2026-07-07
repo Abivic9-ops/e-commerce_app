@@ -9,14 +9,12 @@ interface ProductGridProps {
   products: Product[];
   title?: string;
   subtitle?: string;
-  isLoggedIn?: boolean;
 }
 
 export default function ProductGrid({
   products,
   title,
   subtitle,
-  isLoggedIn = false,
 }: ProductGridProps) {
   if (products.length === 0) {
     return (
@@ -45,7 +43,7 @@ export default function ProductGrid({
       <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <StaggerItem key={product._id}>
-            <ProductCard product={product} isLoggedIn={isLoggedIn} />
+            <ProductCard product={product} />
           </StaggerItem>
         ))}
       </StaggerContainer>

@@ -9,15 +9,19 @@ import {
   ShieldCheck,
   Plus,
   ArrowRight,
+  Wallet,
+  Clock,
+  XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatKES } from '@/lib/utils';
-import { getOrderStats } from '@/app/actions/orders';
+import { getOrderStats, getPaymentStats } from '@/app/actions/orders';
 
 export default async function AdminPage() {
   const { stats, recentOrders } = await getOrderStats();
+  const paymentStats = await getPaymentStats();
 
   const kpiCards = [
     {
@@ -75,7 +79,7 @@ export default async function AdminPage() {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Overview</h1>
           <p className="text-sm text-muted-foreground">
-            Live data from MongoDB — revenue, stock, orders & customers.
+            Live data from MongoDB — revenue, stock, orders, payments & customers.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -115,6 +119,68 @@ export default async function AdminPage() {
             </Link>
           );
         })}
+      </div>
+
+      {/* Payment Summary */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/admin/payments" className="group">
+          <Card className="border-border/50 bg-card/45 backdrop-blur-xs hover:border-primary/30 hover:shadow-md transition-all cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <span className="text-xs font-medium text-muted-foreground">Payment Success</span>
+              <div className="p-2 rounded-xl text-emerald-500 bg-emerald-500/10"><TrendingUp className="h-4 w-4" /></div>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight">{paymentStats.successRate}%</div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                <span>{paymentStats.paidCount} paid · {paymentStats.failedCount} failed</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/payments?status=pending" className="group">
+          <Card className="border-border/50 bg-card/45 backdrop-blur-xs hover:border-amber-500/30 hover:shadow-md transition-all cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <span className="text-xs font-medium text-muted-foreground">Pending Payments</span>
+              <div className="p-2 rounded-xl text-amber-500 bg-amber-500/10"><Clock className="h-4 w-4" /></div>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight">{paymentStats.pendingCount}</div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Awaiting reconciliation</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/payments?status=failed" className="group">
+          <Card className="border-border/50 bg-card/45 backdrop-blur-xs hover:border-rose-500/30 hover:shadow-md transition-all cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <span className="text-xs font-medium text-muted-foreground">Failed Payments</span>
+              <div className="p-2 rounded-xl text-rose-500 bg-rose-500/10"><XCircle className="h-4 w-4" /></div>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-2xl font-bold tracking-tight">{paymentStats.failedCount}</div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Requires attention</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/payments" className="group">
+          <Card className="border-border/50 bg-card/45 backdrop-blur-xs hover:border-primary/30 hover:shadow-md transition-all cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <span className="text-xs font-medium text-muted-foreground">Payment Dashboard</span>
+              <div className="p-2 rounded-xl text-primary bg-primary/10"><Wallet className="h-4 w-4" /></div>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-xl font-bold tracking-tight">Open &rarr;</div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <ArrowUpRight className="h-3 w-3" />
+                <span>Full payment tracking</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Main Content Grid */}

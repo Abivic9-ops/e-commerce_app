@@ -12,7 +12,8 @@ import {
   Ticket, 
   Settings, 
   Store,
-  ShieldAlert
+  ShieldAlert,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export function AdminSidebar({ className, onLinkClick }: AdminSidebarProps) {
     { name: 'Overview', href: '/admin', icon: LayoutDashboard },
     { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+    { name: 'Payments', href: '/admin/payments', icon: Wallet },
     { name: 'Customers', href: '/admin/customers', icon: Users },
     { name: 'Reviews', href: '/admin/reviews', icon: MessageSquare },
     { name: 'Coupons', href: '/admin/coupons', icon: Ticket },

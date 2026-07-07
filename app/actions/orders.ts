@@ -50,6 +50,7 @@ export async function createOrder(data: {
     await newOrder.save();
     
     revalidatePath('/admin');
+    revalidatePath('/admin/payments');
     return { success: true, order: JSON.parse(JSON.stringify(newOrder)) };
   } catch (error: any) {
     console.error('Error creating order:', error);
@@ -125,6 +126,7 @@ export async function updateOrderStatus(id: string, deliveryStatus: string, paym
 
     revalidatePath('/admin');
     revalidatePath(`/admin/orders`);
+    revalidatePath('/admin/payments');
     return { success: true };
   } catch (error: any) {
     console.error('Error updating order status:', error);
@@ -133,8 +135,87 @@ export async function updateOrderStatus(id: string, deliveryStatus: string, paym
 }
 
 /**
+ * Admin action to retrieve payment analytics
+ */
+export async function getPaymentStats() {
+  await requireRole('admin');
+  try {
+    await connectToDatabase();
+  } catch (error) {
+    return {
+      totalCollected: 0,
+      pendingCount: 0,
+      failedCount: 0,
+      paidCount: 0,
+      successRate: 0,
+    };
+  }
+
+  try {
+    const [aggregation] = await Order.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalCollected: {
+            $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, '$total', 0] },
+          },
+          paidCount: {
+            $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, 1, 0] },
+          },
+          pendingCount: {
+            $sum: { $cond: [{ $eq: ['$paymentStatus', 'pending'] }, 1, 0] },
+          },
+          failedCount: {
+            $sum: { $cond: [{ $eq: ['$paymentStatus', 'failed'] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    const totalCollected = aggregation?.totalCollected || 0;
+    const paidCount = aggregation?.paidCount || 0;
+    const pendingCount = aggregation?.pendingCount || 0;
+    const failedCount = aggregation?.failedCount || 0;
+    const totalOrders = paidCount + pendingCount + failedCount;
+    const successRate = totalOrders > 0 ? Math.round((paidCount / totalOrders) * 100) : 0;
+
+    return { totalCollected, paidCount, pendingCount, failedCount, successRate };
+  } catch (error) {
+    console.error('Error calculating payment stats:', error);
+    return { totalCollected: 0, paidCount: 0, pendingCount: 0, failedCount: 0, successRate: 0 };
+  }
+}
+
+/**
  * Admin action to retrieve dashboard KPIs
  */
+/**
+ * Admin action to reconcile payment status without affecting delivery status.
+ */
+export async function reconcilePayment(orderId: string, paymentStatus: 'paid' | 'failed') {
+  await requireRole('admin');
+  await connectToDatabase();
+
+  try {
+    const updated = await Order.findByIdAndUpdate(
+      orderId,
+      { paymentStatus },
+      { new: true }
+    );
+
+    if (!updated) {
+      return { success: false, error: 'Order not found' };
+    }
+
+    revalidatePath('/admin');
+    revalidatePath('/admin/payments');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error reconciling payment:', error);
+    return { success: false, error: error.message || 'Failed to reconcile payment' };
+  }
+}
+
 export async function getOrderStats() {
   await requireRole('admin');
   try {

@@ -9,6 +9,7 @@ import ProductGrid from '@/components/storefront/ProductGrid';
 import Footer from '@/components/storefront/Footer';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { getCurrentUser } from '@/lib/supabase/auth';
+import { connectToDatabase } from '@/lib/db/mongoose';
 import { getProducts } from '@/app/actions/products';
 import { getCategories } from '@/app/actions/categories';
 import { type Product } from '@/components/storefront/ProductCard';
@@ -19,12 +20,32 @@ export default async function StorefrontHomePage() {
   const user = await getCurrentUser();
   const isLoggedIn = !!user;
 
+  interface RawProductDoc {
+    _id: string;
+    name: string;
+    category: { _id: string; name: string } | string;
+    price: number;
+    originalPrice?: number;
+    rating: number;
+    reviewsCount: number;
+    stock: number;
+    images: string[];
+    featured: boolean;
+    slug: string;
+    description?: string;
+    sold?: number;
+  }
+
+  await connectToDatabase();
+
   const [allProducts, allCategories] = await Promise.all([
     getProducts({ limit: 50 }),
     getCategories(),
   ]);
 
-  const mapToProduct = (p: any): Product => ({
+  const products = allProducts as RawProductDoc[];
+
+  const mapToProduct = (p: RawProductDoc): Product => ({
     _id: p._id,
     name: p.name,
     category: typeof p.category === 'object' && p.category ? p.category.name : 'Unassigned',
@@ -40,11 +61,11 @@ export default async function StorefrontHomePage() {
     sold: p.sold,
   });
 
-  const flashSaleProducts: Product[] = allProducts
+  const flashSaleProducts: Product[] = products
     .filter(p => p.featured)
     .map(mapToProduct);
 
-  const recommendedProducts: Product[] = allProducts.map(mapToProduct);
+  const recommendedProducts: Product[] = products.map(mapToProduct);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -88,7 +109,7 @@ export default async function StorefrontHomePage() {
                 Personalized picks based on your interests
               </p>
             </div>
-            <ProductGrid products={recommendedProducts} isLoggedIn={isLoggedIn} />
+            <ProductGrid products={recommendedProducts} />
           </section>
         </FadeIn>
 

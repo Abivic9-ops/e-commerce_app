@@ -58,9 +58,10 @@ interface ProductItem {
 interface ProductsClientProps {
   initialProducts: ProductItem[];
   initialCategories: CategoryItem[];
+  initialCustomerCounts: Record<string, { uniqueCustomers: number; totalUnitsSold: number }>;
 }
 
-export function ProductsClient({ initialProducts, initialCategories }: ProductsClientProps) {
+export function ProductsClient({ initialProducts, initialCategories, initialCustomerCounts }: ProductsClientProps) {
   const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
   const [isPending, startTransition] = useTransition();
 
@@ -365,6 +366,7 @@ export function ProductsClient({ initialProducts, initialCategories }: ProductsC
                     <th className="pb-3 pl-2">Product Info</th>
                     <th className="pb-3">Category</th>
                     <th className="pb-3">Price</th>
+                    <th className="pb-3">Customers</th>
                     <th className="pb-3">Stock & Sold</th>
                     <th className="pb-3">Tags</th>
                     <th className="pb-3 pr-2 text-right">Actions</th>
@@ -413,6 +415,22 @@ export function ProductsClient({ initialProducts, initialCategories }: ProductsC
                             <div className="text-xs text-muted-foreground line-through">
                               {formatKES(product.originalPrice)}
                             </div>
+                          )}
+                        </td>
+
+                        {/* Customers */}
+                        <td className="py-4">
+                          {initialCustomerCounts[product._id] ? (
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground">
+                                {initialCustomerCounts[product._id].uniqueCustomers}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {initialCustomerCounts[product._id].totalUnitsSold} units
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </td>
 

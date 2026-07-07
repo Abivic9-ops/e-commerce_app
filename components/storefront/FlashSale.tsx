@@ -9,16 +9,25 @@ import { useNotificationStore } from '@/lib/store/useNotificationStore';
 interface FlashSaleProps {
   products: Product[];
   isLoggedIn?: boolean;
+  endTimestamp?: number;
 }
 
-export default function FlashSale({ products, isLoggedIn = false }: FlashSaleProps) {
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 2,
-    minutes: 45,
-    seconds: 10,
+export default function FlashSale({ products, isLoggedIn = false, endTimestamp }: FlashSaleProps) {
+  const defaultDuration = 2 * 3600 * 1000 + 45 * 60 * 1000 + 10 * 1000;
+  const endRef = useRef(endTimestamp ?? Date.now() + defaultDuration);
+
+  const getTimeFromDiff = (diff: number) => ({
+    hours: Math.floor(diff / 3600000),
+    minutes: Math.floor((diff % 3600000) / 60000),
+    seconds: Math.floor((diff % 60000) / 1000),
   });
+
+  const [timeLeft, setTimeLeft] = useState(() =>
+    getTimeFromDiff(Math.max(0, endRef.current - Date.now()))
+  );
   const addNotification = useNotificationStore(state => state.addNotification);
   const notifSent = useRef<Set<string>>(new Set());
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const totalMinutes = timeLeft.hours * 60 + timeLeft.minutes;
 
@@ -56,7 +65,7 @@ export default function FlashSale({ products, isLoggedIn = false }: FlashSalePro
   }, [totalMinutes, addNotification]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev.seconds > 0) {
           return { ...prev, seconds: prev.seconds - 1 };
@@ -64,14 +73,23 @@ export default function FlashSale({ products, isLoggedIn = false }: FlashSalePro
           return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
         } else if (prev.hours > 0) {
           return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else {
-          clearInterval(interval);
-          return prev;
         }
+        return { hours: 0, minutes: 0, seconds: 0 };
       });
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
+
+  useEffect(() => {
+    if (timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+  }, [timeLeft]);
 
   const formatNumber = (num: number) => String(num).padStart(2, '0');
 
