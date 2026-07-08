@@ -9,16 +9,26 @@ import ProductGrid from '@/components/storefront/ProductGrid';
 import Footer from '@/components/storefront/Footer';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { getCurrentUser } from '@/lib/supabase/auth';
-import { connectToDatabase } from '@/lib/db/mongoose';
 import { getProducts } from '@/app/actions/products';
 import { getCategories } from '@/app/actions/categories';
 import { type Product } from '@/components/storefront/ProductCard';
 
 export const dynamic = 'force-dynamic';
 
+function getTimeFromDiff(diff: number) {
+  return {
+    hours: Math.floor(diff / 3600000),
+    minutes: Math.floor((diff % 3600000) / 60000),
+    seconds: Math.floor((diff % 60000) / 1000),
+  };
+}
+
 export default async function StorefrontHomePage() {
   const user = await getCurrentUser();
   const isLoggedIn = !!user;
+
+  const flashSaleEndTime = Date.now() + 2 * 3600 * 1000 + 45 * 60 * 1000 + 10 * 1000;
+  const flashSaleInitialTimeLeft = getTimeFromDiff(Math.max(0, flashSaleEndTime - Date.now()));
 
   interface RawProductDoc {
     _id: string;
@@ -35,8 +45,6 @@ export default async function StorefrontHomePage() {
     description?: string;
     sold?: number;
   }
-
-  await connectToDatabase();
 
   const [allProducts, allCategories] = await Promise.all([
     getProducts({ limit: 50 }),
@@ -96,7 +104,7 @@ export default async function StorefrontHomePage() {
         </FadeIn>
 
         <FadeIn>
-          <FlashSale products={flashSaleProducts} isLoggedIn={isLoggedIn} />
+          <FlashSale products={flashSaleProducts} isLoggedIn={isLoggedIn} endTimestamp={flashSaleEndTime} initialTimeLeft={flashSaleInitialTimeLeft} />
         </FadeIn>
 
         <FadeIn>

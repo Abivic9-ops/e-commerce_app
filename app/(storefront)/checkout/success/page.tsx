@@ -28,7 +28,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
           Order Confirmed!
         </h1>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-          Thank you for shopping with ShopEasy. Your payment via M-Pesa was successful and your order is now being processed.
+          Thank you for shopping with ShopEasy. Your payment was successful and your order is now being processed.
         </p>
       </div>
 

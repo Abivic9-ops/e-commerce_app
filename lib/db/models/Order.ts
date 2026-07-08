@@ -23,14 +23,17 @@ export interface IOrder extends Document {
   total: number;
   paymentStatus: 'pending' | 'paid' | 'failed';
   deliveryStatus: 'placed' | 'processing' | 'shipped' | 'delivered';
-  mpesaDetails?: {
-    MerchantRequestID?: string;
-    CheckoutRequestID?: string;
-    ReceiptNumber?: string;
-    ResultCode?: number;
-    ResultDesc?: string;
-    phoneNumber?: string;
-    transactionDate?: Date;
+  paystackDetails?: {
+    reference?: string;
+    accessCode?: string;
+    transactionId?: number;
+    channel?: string;
+    cardType?: string;
+    last4?: string;
+    paidAt?: Date;
+    receiptNumber?: string;
+    currency?: string;
+    gatewayResponse?: string;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -70,14 +73,17 @@ const OrderSchema = new Schema<IOrder>(
       enum: ['placed', 'processing', 'shipped', 'delivered'],
       default: 'placed',
     },
-    mpesaDetails: {
-      MerchantRequestID: { type: String },
-      CheckoutRequestID: { type: String },
-      ReceiptNumber: { type: String },
-      ResultCode: { type: Number },
-      ResultDesc: { type: String },
-      phoneNumber: { type: String },
-      transactionDate: { type: Date },
+    paystackDetails: {
+      reference: { type: String },
+      accessCode: { type: String },
+      transactionId: { type: Number },
+      channel: { type: String },
+      cardType: { type: String },
+      last4: { type: String },
+      paidAt: { type: Date },
+      receiptNumber: { type: String },
+      currency: { type: String },
+      gatewayResponse: { type: String },
     },
   },
   { timestamps: true }

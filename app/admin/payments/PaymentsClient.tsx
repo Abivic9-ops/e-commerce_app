@@ -223,24 +223,30 @@ export default function AdminPaymentsClient() {
                                 <p className="text-xs text-muted-foreground">Delivery</p>
                                 <p className="font-semibold capitalize">{order.deliveryStatus}</p>
                               </div>
-                              {order.mpesaDetails?.ReceiptNumber && (
+                              {order.paystackDetails?.receiptNumber && (
                                 <div>
-                                  <p className="text-xs text-muted-foreground">M-Pesa Receipt</p>
-                                  <p className="font-mono font-semibold text-xs">{order.mpesaDetails.ReceiptNumber}</p>
+                                  <p className="text-xs text-muted-foreground">Paystack Reference</p>
+                                  <p className="font-mono font-semibold text-xs">{order.paystackDetails.receiptNumber}</p>
                                 </div>
                               )}
-                              {order.mpesaDetails?.transactionDate && (
+                              {order.paystackDetails?.paidAt && (
                                 <div>
                                   <p className="text-xs text-muted-foreground">Transaction Date</p>
                                   <p className="font-semibold text-xs">
-                                    {new Date(order.mpesaDetails.transactionDate).toLocaleString('en-KE')}
+                                    {new Date(order.paystackDetails.paidAt).toLocaleString('en-KE')}
                                   </p>
                                 </div>
                               )}
-                              {order.mpesaDetails?.phoneNumber && (
+                              {order.paystackDetails?.channel && (
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Payer Phone</p>
-                                  <p className="font-semibold text-xs">{order.mpesaDetails.phoneNumber}</p>
+                                  <p className="text-xs text-muted-foreground">Payment Channel</p>
+                                  <p className="font-semibold text-xs capitalize">{order.paystackDetails.channel}</p>
+                                </div>
+                              )}
+                              {order.paystackDetails?.cardType && order.paystackDetails?.last4 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Card</p>
+                                  <p className="font-semibold text-xs">{order.paystackDetails.cardType} ****{order.paystackDetails.last4}</p>
                                 </div>
                               )}
                             </div>

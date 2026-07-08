@@ -13,11 +13,9 @@ export default function AdminSettingsPage() {
     { key: 'MONGODB_URI', label: 'MongoDB Connection', group: 'Database', icon: '🗄️', hint: 'Your MongoDB Atlas connection string.' },
     { key: 'NEXT_PUBLIC_SUPABASE_URL', label: 'Supabase Project URL', group: 'Authentication', icon: '🔑', hint: 'Your Supabase project URL.' },
     { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', label: 'Supabase Anon Key', group: 'Authentication', icon: '🔑', hint: 'Public anon key for client-side auth.' },
-    { key: 'MPESA_CONSUMER_KEY', label: 'M-Pesa Consumer Key', group: 'Payments', icon: '💳', hint: 'Daraja API consumer key from Safaricom developer portal.' },
-    { key: 'MPESA_CONSUMER_SECRET', label: 'M-Pesa Consumer Secret', group: 'Payments', icon: '💳', hint: 'Keep this secret. Never expose in client-side code.' },
-    { key: 'MPESA_PASSKEY', label: 'M-Pesa Passkey', group: 'Payments', icon: '💳', hint: 'Lipa Na M-Pesa passkey from Daraja portal.' },
-    { key: 'MPESA_SHORTCODE', label: 'M-Pesa Shortcode', group: 'Payments', icon: '💳', hint: 'Your business till or paybill number.' },
-    { key: 'MPESA_CALLBACK_URL', label: 'M-Pesa Callback URL', group: 'Payments', icon: '🔗', hint: 'Public URL for receiving M-Pesa payment callbacks (must be HTTPS).' },
+    { key: 'NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY', label: 'Paystack Public Key', group: 'Payments', icon: '💳', hint: 'Public key from Paystack dashboard (starts with pk_).' },
+    { key: 'PAYSTACK_SECRET_KEY', label: 'Paystack Secret Key', group: 'Payments', icon: '💳', hint: 'Secret key from Paystack dashboard (starts with sk_). Keep this secret.' },
+    { key: 'NEXT_PUBLIC_APP_URL', label: 'App URL', group: 'Payments', icon: '🔗', hint: 'Your app URL used for Paystack callback URLs (e.g. http://localhost:3000).' },
   ];
 
   const groups = [...new Set(envVars.map((e) => e.group))];

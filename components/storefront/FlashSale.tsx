@@ -10,24 +10,17 @@ interface FlashSaleProps {
   products: Product[];
   isLoggedIn?: boolean;
   endTimestamp?: number;
+  initialTimeLeft?: { hours: number; minutes: number; seconds: number };
 }
 
-export default function FlashSale({ products, isLoggedIn = false, endTimestamp }: FlashSaleProps) {
-  const defaultDuration = 2 * 3600 * 1000 + 45 * 60 * 1000 + 10 * 1000;
-  const endRef = useRef(endTimestamp ?? Date.now() + defaultDuration);
-
-  const getTimeFromDiff = (diff: number) => ({
-    hours: Math.floor(diff / 3600000),
-    minutes: Math.floor((diff % 3600000) / 60000),
-    seconds: Math.floor((diff % 60000) / 1000),
-  });
-
-  const [timeLeft, setTimeLeft] = useState(() =>
-    getTimeFromDiff(Math.max(0, endRef.current - Date.now()))
-  );
+export default function FlashSale({ products, isLoggedIn = false, endTimestamp, initialTimeLeft }: FlashSaleProps) {
   const addNotification = useNotificationStore(state => state.addNotification);
   const notifSent = useRef<Set<string>>(new Set());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [timeLeft, setTimeLeft] = useState(
+    initialTimeLeft ?? { hours: 2, minutes: 45, seconds: 10 }
+  );
 
   const totalMinutes = timeLeft.hours * 60 + timeLeft.minutes;
 
@@ -65,6 +58,22 @@ export default function FlashSale({ products, isLoggedIn = false, endTimestamp }
   }, [totalMinutes, addNotification]);
 
   useEffect(() => {
+    if (endTimestamp && initialTimeLeft) {
+      const realDiff = Math.max(0, endTimestamp - Date.now());
+      const realTimeLeft = {
+        hours: Math.floor(realDiff / 3600000),
+        minutes: Math.floor((realDiff % 3600000) / 60000),
+        seconds: Math.floor((realDiff % 60000) / 1000),
+      };
+      if (
+        realTimeLeft.hours !== initialTimeLeft.hours ||
+        realTimeLeft.minutes !== initialTimeLeft.minutes ||
+        realTimeLeft.seconds !== initialTimeLeft.seconds
+      ) {
+        setTimeLeft(realTimeLeft);
+      }
+    }
+
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev.seconds > 0) {
@@ -77,10 +86,11 @@ export default function FlashSale({ products, isLoggedIn = false, endTimestamp }
         return { hours: 0, minutes: 0, seconds: 0 };
       });
     }, 1000);
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [endTimestamp, initialTimeLeft]);
 
   useEffect(() => {
     if (timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0) {

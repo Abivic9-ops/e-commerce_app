@@ -186,10 +186,10 @@ export default function AdminOrdersClient() {
                                 <p className="text-xs text-muted-foreground">Shipping</p>
                                 <p className="font-semibold">{formatKES(order.shippingFee)}</p>
                               </div>
-                              {order.mpesaDetails?.ReceiptNumber && (
+                              {order.paystackDetails?.receiptNumber && (
                                 <div>
-                                  <p className="text-xs text-muted-foreground">M-Pesa Receipt</p>
-                                  <p className="font-mono font-semibold text-xs">{order.mpesaDetails.ReceiptNumber}</p>
+                                  <p className="text-xs text-muted-foreground">Paystack Ref</p>
+                                  <p className="font-mono font-semibold text-xs">{order.paystackDetails.receiptNumber}</p>
                                 </div>
                               )}
                             </div>

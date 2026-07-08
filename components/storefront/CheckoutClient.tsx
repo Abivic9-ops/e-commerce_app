@@ -8,11 +8,41 @@ import { useNotificationStore } from '@/lib/store/useNotificationStore';
 import { formatKES } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShieldCheck, Truck, Lock, ArrowLeft, Loader2, Phone, Tag, Check, X } from 'lucide-react';
+import { ShieldCheck, Truck, Lock, ArrowLeft, Loader2, Tag, Check, X, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { getOrderById } from '@/app/actions/orders';
 import { validateCoupon } from '@/app/actions/coupons';
+
+declare global {
+  interface Window {
+    PaystackPop: {
+      setup: (config: {
+        key: string;
+        email: string;
+        amount: number;
+        ref: string;
+        currency?: string;
+        metadata?: Record<string, unknown>;
+        onClose?: () => void;
+        callback?: (response: { reference: string; trans?: string }) => void;
+      }) => { openIframe: () => void };
+    };
+  }
+}
+
+function loadPaystackScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector('script[src*="js.paystack.co"]')) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Paystack SDK'));
+    document.head.appendChild(script);
+  });
+}
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -23,6 +53,7 @@ export default function CheckoutClient() {
   
   const [formData, setFormData] = useState({
     fullName: '',
+    email: '',
     phone: '',
     address: '',
     city: 'Nairobi',
@@ -67,25 +98,14 @@ export default function CheckoutClient() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.phone || !formData.address) {
+    if (!formData.fullName || !formData.email || !formData.address) {
       toast.error('Please fill in all required fields.');
       return;
     }
 
-    // Basic Kenyan phone validation (07xx / 01xx / 254...)
-    const phoneRegex = /^(?:254|\+254|0)?([17]\d{8})$/;
-    const match = formData.phone.match(phoneRegex);
-    if (!match) {
-      toast.error('Please enter a valid Safaricom M-Pesa number.');
-      return;
-    }
-    const formattedPhone = `254${match[1]}`;
-
     setIsProcessing(true);
-    toast.info('Initiating M-Pesa STK Push...');
 
     try {
-      // Map cart items for DB Order representation
       const orderItems = items.map(item => ({
         product: item.id,
         name: item.name,
@@ -94,17 +114,15 @@ export default function CheckoutClient() {
         image: item.image,
       }));
 
-      // Initiate STK Push and Order creation
-      const res = await fetch('/api/mpesa/stk-push', {
+      const res = await fetch('/api/paystack/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: formattedPhone,
-          amount: total,
+          email: formData.email,
           items: orderItems,
           customerDetails: {
             fullName: formData.fullName,
-            phone: formattedPhone,
+            phone: formData.phone || '',
             address: formData.address,
             city: formData.city,
           },
@@ -116,52 +134,45 @@ export default function CheckoutClient() {
 
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Payment initiation failed');
-      
-      const toastId = toast.loading('Check your phone to enter M-Pesa PIN...', { duration: 60000 });
-      
-      const orderId = data.orderId;
-      let attempts = 0;
-      const maxAttempts = 30; // 60 seconds total polling
 
-      // Poll order confirmation state dynamically from DB
-      const pollInterval = setInterval(async () => {
-        attempts++;
-        try {
-          const updatedOrder = await getOrderById(orderId);
-          if (updatedOrder) {
-            if (updatedOrder.paymentStatus === 'paid') {
-              clearInterval(pollInterval);
-              toast.dismiss(toastId);
-              toast.success('Payment verified successfully!');
-              setIsProcessing(false);
-              addNotification({
-                type: 'order',
-                title: 'Order Confirmed!',
-                message: `Your order #${orderId.slice(-8)} has been placed successfully. Track it in your orders.`,
-                actionUrl: '/orders',
-              });
-              clearCart();
-              router.push(`/checkout/success?orderId=${orderId}`);
-            } else if (updatedOrder.paymentStatus === 'failed') {
-              clearInterval(pollInterval);
-              toast.dismiss(toastId);
-              toast.error('M-Pesa payment failed or was cancelled.');
-              setIsProcessing(false);
-            }
-          }
-        } catch (pollErr) {
-          console.error('Error polling order:', pollErr);
-        }
+      await loadPaystackScript();
 
-        if (attempts >= maxAttempts) {
-          clearInterval(pollInterval);
-          toast.dismiss(toastId);
-          toast.warning('Payment verification taking longer than expected. Redirecting to receipt page...');
+      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+      if (!publicKey) {
+        throw new Error('Paystack public key is not configured');
+      }
+
+      const handler = window.PaystackPop.setup({
+        key: publicKey,
+        email: formData.email,
+        amount: Math.round(total * 100),
+        ref: data.reference,
+        currency: 'KES',
+        metadata: {
+          orderId: data.orderId,
+          customer_name: formData.fullName,
+        },
+        onClose: () => {
           setIsProcessing(false);
+          toast.info('Payment window closed. You can try again.');
+        },
+        callback: function (response: { reference: string }) {
+          fetch(`/api/paystack/verify?reference=${response.reference}`).catch((err) =>
+            console.error('Verify call failed (order may still process via webhook):', err)
+          );
+          addNotification({
+            type: 'order',
+            title: 'Order Confirmed!',
+            message: `Your order #${data.orderId.slice(-8)} has been placed successfully. Track it in your orders.`,
+            actionUrl: '/orders',
+          });
           clearCart();
-          router.push(`/checkout/success?orderId=${orderId}`);
-        }
-      }, 2000);
+          setIsProcessing(false);
+          router.push(`/checkout/success?orderId=${data.orderId}`);
+        },
+      });
+
+      handler.openIframe();
 
     } catch (err: any) {
       console.error(err);
@@ -169,7 +180,6 @@ export default function CheckoutClient() {
       setIsProcessing(false);
     }
   };
-
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -184,7 +194,7 @@ export default function CheckoutClient() {
         <div className="lg:col-span-7 space-y-8">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">Checkout</h1>
-            <p className="text-muted-foreground">Please enter your delivery and M-Pesa payment details.</p>
+            <p className="text-muted-foreground">Enter your details to complete your purchase.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -203,6 +213,27 @@ export default function CheckoutClient() {
                     value={formData.fullName}
                     onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                     required 
+                    className="bg-secondary/30"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="text-sm font-semibold">Email Address</label>
+                  <Input 
+                    type="email"
+                    placeholder="john@example.com" 
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    required 
+                    className="bg-secondary/30"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <label className="text-sm font-semibold">Phone Number (optional)</label>
+                  <Input 
+                    type="tel"
+                    placeholder="+254 7XX XXX XXX" 
+                    value={formData.phone}
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
                     className="bg-secondary/30"
                   />
                 </div>
@@ -235,33 +266,22 @@ export default function CheckoutClient() {
             {/* Payment Details */}
             <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <Phone className="h-5 w-5 text-emerald-500" />
-                M-Pesa Payment
+                <CreditCard className="h-5 w-5 text-primary" />
+                Paystack Payment
               </h2>
               
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-start gap-3">
-                <Lock className="h-5 w-5 text-emerald-600 mt-0.5" />
-                <div className="text-sm text-emerald-800 dark:text-emerald-300">
-                  <p className="font-bold mb-1">Secure STK Push</p>
-                  <p>Enter your Safaricom number. You will receive a prompt on your phone to enter your M-Pesa PIN.</p>
+              <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-start gap-3">
+                <Lock className="h-5 w-5 text-primary mt-0.5" />
+                <div className="text-sm text-foreground">
+                  <p className="font-bold mb-1">Secured by Paystack</p>
+                  <p>Pay with your card, mobile money, or bank transfer. Your payment details are handled securely by Paystack.</p>
                 </div>
               </div>
 
-              <div className="space-y-2 max-w-md">
-                <label className="text-sm font-semibold">M-Pesa Phone Number</label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground select-none">
-                    +254
-                  </div>
-                  <Input 
-                    type="tel" 
-                    placeholder="7XX XXX XXX" 
-                    value={formData.phone}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    required 
-                    className="pl-14 bg-secondary/30 font-medium text-lg"
-                  />
-                </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  After clicking "Pay", a secure payment popup will open. Complete the payment there.
+                </p>
               </div>
             </div>
 
@@ -269,12 +289,12 @@ export default function CheckoutClient() {
               type="submit" 
               size="lg" 
               disabled={isProcessing}
-              className="w-full sm:w-auto px-12 py-6 text-lg font-bold shadow-xl bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              className="w-full sm:w-auto px-12 py-6 text-lg font-bold shadow-xl cursor-pointer"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Awaiting PIN...
+                  Opening Paystack...
                 </>
               ) : (
                 `Pay ${formatKES(total)}`
@@ -361,10 +381,9 @@ export default function CheckoutClient() {
               </div>
             </div>
 
-
             <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4" />
-              100% Secure Checkout powered by M-Pesa
+              100% Secure Checkout powered by Paystack
             </div>
           </div>
         </div>
